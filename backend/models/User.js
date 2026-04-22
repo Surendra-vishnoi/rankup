@@ -1,0 +1,39 @@
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  cfHandle: {
+    type: String,
+    trim: true,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  isWingMember: {
+    type: Boolean,
+    default: false,
+  },
+  rating: {
+    type: Number,
+  },
+  rank: {
+    type: String,
+  },
+  karma: {
+    type: Number,
+    default: 0,
+  },
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+export default User;
