@@ -88,7 +88,7 @@ export default function CreateEditorialPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim())          { setError('Title is required.'); return; }
-    if (!form.questionNumber.trim()) { setError('Question number is required (e.g. 158A).'); return; }
+    if (!form.questionNumber.trim()) { setError('Question link is required.'); return; }
     if (!form.solution.trim())       { setError('Solution body is required.'); return; }
 
     setLoading(true);
@@ -197,17 +197,14 @@ export default function CreateEditorialPage() {
             {/* Left: metadata + hints */}
             <div className="flex flex-col gap-5">
 
-              {/* Question Number */}
+              {/* Question Link */}
               <div>
-                <label htmlFor="question-number" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                  CF Question Number <span className="text-amber-400">*</span>
+                <label htmlFor="question-link" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Question Link <span className="text-amber-400">*</span>
                 </label>
-                <input id="question-number" className="input-field font-mono" type="text"
-                  placeholder="e.g. 158A or 1234BC" value={form.questionNumber}
+                <input id="question-link" className="input-field font-mono" type="url"
+                  placeholder="e.g. https://codeforces.com/problemset/problem/158/A" value={form.questionNumber}
                   onChange={e => set('questionNumber', e.target.value)} required />
-                {form.questionNumber && !/^\d+[A-Za-z]*$/.test(form.questionNumber) && (
-                  <p className="text-xs text-amber-400/80 mt-1">Format: digits + optional letter(s), e.g. <code className="font-mono">158A</code></p>
-                )}
               </div>
 
               {/* Category */}

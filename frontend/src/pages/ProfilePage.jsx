@@ -1,0 +1,446 @@
+import { useState, useEffect } from 'react';
+import { API_BASE } from '../apiConfig';
+import { cfRankColor } from '../utils/cfRank.js';
+
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)    return `${Math.floor(diff)}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function Skeleton({ className }) {
+  return <div className={`animate-pulse bg-white/10 rounded ${className}`} />;
+}
+
+function StatCard({ label, value, icon, color = 'text-slate-100' }) {
+  return (
+    <div className="bg-bg-surface border border-white/[0.07] rounded-xl p-4 flex flex-col gap-1 text-center">
+      <div className="text-xl mb-1">{icon}</div>
+      <div className={`text-2xl font-extrabold font-mono ${color}`}>{value ?? '—'}</div>
+      <div className="text-xs text-slate-500 uppercase tracking-wider">{label}</div>
+    </div>
+  );
+}
+
+const ACTIVITY_TABS = [
+  { key: 'posts',      label: 'Discussions',      emoji: '📝' },
+  { key: 'editorials', label: 'Editorials', emoji: '⭐' },
+  { key: 'comments',   label: 'Comments',   emoji: '💬' },
+];
+
+export default function ProfilePage() {
+  // Extract username from path: /profile/:username
+  const username = window.location.pathname.split('/profile/')[1]?.split('?')[0] || '';
+
+  const [profile, setProfile]     = useState(null);
+  const [activity, setActivity]   = useState({ posts: [], editorials: [], comments: [] });
+  const [cfStats, setCfStats]     = useState({ solved: null, rating: null, rank: null });
+  const [activeTab, setActiveTab] = useState('posts');
+  const [loading, setLoading]     = useState(true);
+  const [actLoading, setActLoading] = useState(true);
+  const [error, setError]         = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Fetch current session
+  useEffect(() => {
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.isAuthenticated) setCurrentUser(d.user); })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
+
+  // Fetch user profile from our backend
+  useEffect(() => {
+    if (!username) { setError('No username provided.'); setLoading(false); return; }
+    setLoading(true);
+    fetch(`${API_BASE}/api/users/${encodeURIComponent(username)}`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { setProfile(data); setLoading(false); })
+      .catch(status => {
+        setError(status === 404 ? `User "${username}" not found.` : 'Failed to load profile.');
+        setLoading(false);
+      });
+  }, [username]);
+
+  // Fetch activity feed
+  useEffect(() => {
+    if (!username) return;
+    setActLoading(true);
+    fetch(`${API_BASE}/api/users/${encodeURIComponent(username)}/activity`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { 
+        setActivity(data); 
+        setActLoading(false); 
+        if (data.posts?.length === 0) {
+          if (data.editorials?.length > 0) setActiveTab('editorials');
+          else if (data.comments?.length > 0) setActiveTab('comments');
+        }
+      })
+      .catch(() => setActLoading(false));
+  }, [username]);
+
+  // Fetch live CF stats
+  useEffect(() => {
+    if (!profile?.user?.cfHandle) return;
+    const handle = profile.user.cfHandle;
+    Promise.all([
+      fetch(`https://codeforces.com/api/user.info?handles=${handle}`).then(r => r.json()),
+      fetch(`https://codeforces.com/api/user.status?handle=${handle}`).then(r => r.json()),
+    ]).then(([info, status]) => {
+      const cfUser = info?.result?.[0];
+      const solved = status?.status === 'OK'
+        ? new Set(
+            status.result
+              .filter(s => s.verdict === 'OK' && s.problem?.contestId && s.problem?.index)
+              .map(s => `${s.problem.contestId}${s.problem.index}`)
+          ).size
+        : null;
+      setCfStats({
+        rating: cfUser?.rating ?? null,
+        rank: cfUser?.rank ?? null,
+        solved,
+      });
+    }).catch(() => {});
+  }, [profile]);
+
+  const user   = profile?.user;
+  const stats  = profile?.stats;
+  const color  = cfRankColor(cfStats.rank || user?.rank || '');
+  const isOwn  = currentUser && user && currentUser.username === user.username;
+
+  if (error) return (
+    <div className="min-h-screen bg-bg-deep flex items-center justify-center">
+      <div className="card p-8 text-center max-w-sm">
+        <div className="text-5xl mb-4">😕</div>
+        <h2 className="text-xl font-bold text-slate-100 mb-2">Profile Not Found</h2>
+        <p className="text-slate-500 text-sm mb-4">{error}</p>
+        <a href="/" className="btn-primary text-sm">Back to Hub</a>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-bg-deep">
+      {/* Background mesh */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
+        <div className="absolute inset-0" style={{
+          background: 'radial-gradient(ellipse 80% 50% at 20% 0%, rgba(99,120,255,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(167,139,250,0.08) 0%, transparent 60%)'
+        }} />
+      </div>
+
+      {/* Navbar */}
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+          <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
+            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
+          </a>
+          <div className="flex items-center gap-1 text-sm text-slate-500">
+            <a href="/" className="hover:text-slate-200 transition-colors">Hub</a>
+            <span>/</span>
+            <span className="text-slate-300">Profile</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+
+            <a href="/contests" className="text-slate-400 hover:text-slate-200 text-sm px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              Contests
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+        {/* Profile Header Card */}
+        <div className="card p-6 mb-6">
+          {loading ? (
+            <div className="flex items-start gap-5">
+              <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
+              <div className="flex-1 pt-2">
+                <Skeleton className="h-7 w-48 mb-2" />
+                <Skeleton className="h-4 w-32 mb-4" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              {/* Avatar */}
+              <div className="relative group">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-extrabold text-white flex-shrink-0 shadow-lg overflow-hidden border-2 border-transparent"
+                  style={{
+                    background: user?.isWingMember
+                      ? 'linear-gradient(135deg, #eab308, #d97706)'
+                      : `linear-gradient(135deg, ${color}cc, ${color}55)`,
+                    boxShadow: user?.isWingMember ? '0 0 24px rgba(234,179,8,0.4)' : `0 0 24px ${color}33`,
+                    borderColor: user?.avatarUrl ? (user.isWingMember ? '#eab308' : color) : 'transparent'
+                  }}
+                >
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.username || '?')[0].toUpperCase()
+                  )}
+                </div>
+                {isOwn && (
+                  <button 
+                    onClick={() => {
+                      const url = prompt('Enter image URL for your avatar:', user?.avatarUrl || '');
+                      if (url !== null) {
+                        fetch(`${API_BASE}/api/users/profile`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({ avatarUrl: url })
+                        }).then(r => r.json()).then(() => window.location.reload());
+                      }
+                    }}
+                    className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-semibold text-white backdrop-blur-sm"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap mb-1">
+                  <h1 className="text-2xl font-extrabold text-slate-100">{user?.username}</h1>
+                  {isOwn && (
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent/15 border border-accent/30 text-accent">
+                      You
+                    </span>
+                  )}
+                  {user?.isWingMember && (
+                    <span className="badge-wing">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/></svg>
+                      Wing Member
+                    </span>
+                  )}
+                  {user?.isVerified && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      CF Verified
+                    </span>
+                  )}
+                </div>
+
+                {/* CF handle + rank */}
+                {user?.cfHandle && (
+                  <a
+                    href={`https://codeforces.com/profile/${user.cfHandle}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold mb-2 hover:underline"
+                    style={{ color }}
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    {user.cfHandle}
+                    {(cfStats.rank || user.rank) && (
+                      <span className="ml-1 capitalize font-normal text-xs opacity-80">
+                        · {(cfStats.rank || user.rank).replace(/\b\w/g, c => c.toUpperCase())}
+                      </span>
+                    )}
+                  </a>
+                )}
+
+                <p className="text-xs text-slate-500">
+                  Joined {new Date(user?.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+
+              {/* Actions */}
+              {isOwn && (
+                <div className="mt-4 sm:mt-0 sm:ml-auto">
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:border-red-400/40 transition-colors shadow-sm"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        {!loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+            <StatCard icon="⚡" label="CF Rating" value={cfStats.rating ?? user?.rating} color={`font-mono`} />
+            <StatCard icon="✅" label="Solved" value={cfStats.solved} color="text-emerald-400" />
+            <StatCard icon="💚" label="Karma" value={user?.karma != null ? `+${user.karma}` : '0'} color="text-emerald-400" />
+            <StatCard icon="📝" label="Total Posts" value={(stats?.postCount ?? 0) + (stats?.editorialCount ?? 0)} />
+            <div className="bg-bg-surface rounded-xl p-3 text-center border border-white/[0.05] hover:border-white/10 transition-colors flex flex-col items-center justify-center">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Medals</p>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <span title="Gold" className="text-yellow-400">🥇 {stats?.medals?.gold || 0}</span>
+                <span title="Silver" className="text-slate-300">🥈 {stats?.medals?.silver || 0}</span>
+                <span title="Bronze" className="text-amber-600">🥉 {stats?.medals?.bronze || 0}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Activity Feed */}
+        <div className="card p-0 overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-white/[0.07] bg-bg-surface/50">
+            {ACTIVITY_TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold transition-all border-b-2 -mb-px
+                  ${activeTab === tab.key
+                    ? 'text-accent border-accent bg-accent/5'
+                    : 'text-slate-500 border-transparent hover:text-slate-300 hover:bg-white/5'
+                  }`}
+              >
+                <span>{tab.emoji}</span>
+                {tab.label}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold
+                  ${activeTab === tab.key ? 'bg-accent/20 text-accent' : 'bg-white/10 text-slate-500'}`}>
+                  {activity[tab.key]?.length ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div className="p-4">
+            {actLoading ? (
+              <div className="flex flex-col gap-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="animate-pulse flex flex-col gap-2 p-3 border border-white/5 rounded-xl">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : activeTab === 'posts' ? (
+              <PostsTab posts={activity.posts} />
+            ) : activeTab === 'editorials' ? (
+              <EditorialsTab editorials={activity.editorials} />
+            ) : (
+              <CommentsTab comments={activity.comments} />
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const CAT_COLOR = {
+  Insight: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
+  Doubt:   'text-red-400 bg-red-400/10 border-red-400/30',
+  General: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
+};
+const CAT_EMOJI = { Insight: '💡', Doubt: '🐛', General: '☕' };
+
+function PostsTab({ posts }) {
+  if (!posts.length) return <EmptyState icon="📝" text="No posts yet." />;
+  return (
+    <div className="flex flex-col gap-3">
+      {posts.map(p => (
+        <a
+          key={p._id}
+          href={`/?post=${p._id}`}
+          className="flex flex-col gap-2 p-4 rounded-xl border border-white/[0.06] hover:border-accent/30 hover:bg-white/[0.02] transition-all group"
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${CAT_COLOR[p.category] || CAT_COLOR.General}`}>
+              {CAT_EMOJI[p.category]} {p.category}
+            </span>
+            <span className="text-xs text-slate-500 ml-auto">{timeAgo(p.createdAt)}</span>
+          </div>
+          <p className="text-sm font-semibold text-slate-200 group-hover:text-accent transition-colors line-clamp-2">{p.title}</p>
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+              {p.upvotes?.length ?? 0} upvotes
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function EditorialsTab({ editorials }) {
+  if (!editorials.length) return <EmptyState icon="⭐" text="No editorials yet." />;
+  return (
+    <div className="flex flex-col gap-3">
+      {editorials.map(e => (
+        <a
+          key={e._id}
+          href={`/editorials?id=${e._id}`}
+          className="flex flex-col gap-2 p-4 rounded-xl border border-yellow-500/20 hover:border-yellow-400/40 hover:bg-yellow-500/[0.03] transition-all group"
+          style={{ background: 'linear-gradient(135deg, rgba(234,179,8,0.04) 0%, transparent 60%)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-400">
+              ⭐ Editorial
+            </span>
+            {e.questionNumber && (
+              <span className="text-xs font-mono text-slate-400">
+                {e.questionNumber.startsWith('http') ? 'Problem Link ↗' : `CF ${e.questionNumber}`}
+              </span>
+            )}
+            <span className="text-xs text-slate-500 ml-auto">{timeAgo(e.createdAt)}</span>
+          </div>
+          <p className="text-sm font-semibold text-yellow-50 group-hover:text-yellow-300 transition-colors line-clamp-2">{e.title}</p>
+          <p className="text-xs text-slate-500">{e.upvotes?.length ?? 0} upvotes</p>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function CommentsTab({ comments }) {
+  if (!comments.length) return <EmptyState icon="💬" text="No comments yet." />;
+  return (
+    <div className="flex flex-col gap-3">
+      {comments.map(c => (
+        <div
+          key={c._id}
+          className="flex flex-col gap-1.5 p-4 rounded-xl border border-white/[0.06] hover:border-white/10 transition-all"
+        >
+          {c.post && (
+            <a
+              href={`/?post=${c.post._id}`}
+              className="text-xs text-slate-500 hover:text-accent transition-colors flex items-center gap-1"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              On: {c.post.title}
+            </a>
+          )}
+          <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">{c.content}</p>
+          <p className="text-xs text-slate-600">{timeAgo(c.createdAt)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ icon, text }) {
+  return (
+    <div className="py-12 text-center">
+      <div className="text-4xl mb-3">{icon}</div>
+      <p className="text-slate-500 text-sm">{text}</p>
+    </div>
+  );
+}

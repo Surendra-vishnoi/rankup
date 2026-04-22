@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  avatarUrl: {
+    type: String,
+    default: '',
+  },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

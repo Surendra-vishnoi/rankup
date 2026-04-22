@@ -54,6 +54,9 @@ export const addComment = async (req, res) => {
 
     await newComment.save();
     
+    // Increment author's karma
+    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 1 } });
+
     // Return with populated author so UI updates immediately
     await newComment.populate('author', 'username cfHandle rank rating isWingMember');
 

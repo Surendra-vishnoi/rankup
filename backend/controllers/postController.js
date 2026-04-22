@@ -37,6 +37,10 @@ export const createPost = async (req, res) => {
       cfProblemId: category === 'Doubt' ? cfProblemId?.trim() : undefined,
     });
     await post.save();
+    
+    // Increment author's karma (3 for post)
+    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 3 } });
+
     await post.populate('author', 'username cfHandle rank rating isWingMember isVerified');
 
     res.status(201).json({ post });

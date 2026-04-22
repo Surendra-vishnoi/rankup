@@ -11,17 +11,20 @@ const TABS = [
   { key: 'General',   label: 'General',   emoji: '☕' },
 ];
 
-/* ── Skeleton card for loading state ── */
+/* ── Skeleton card — Twitter-style ── */
 function SkeletonCard() {
   return (
-    <div className="card p-5 flex flex-col gap-3 animate-pulse">
-      <div className="h-3 w-20 bg-white/10 rounded-full" />
-      <div className="h-4 w-3/4 bg-white/10 rounded" />
-      <div className="h-3 w-full bg-white/[0.07] rounded" />
-      <div className="h-3 w-2/3 bg-white/[0.07] rounded" />
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.06]">
-        <div className="w-7 h-7 rounded-full bg-white/10" />
-        <div className="h-3 w-24 bg-white/10 rounded" />
+    <div className="flex gap-3 px-4 py-4 border-b border-white/[0.06] animate-pulse">
+      <div className="w-10 h-10 rounded-full bg-white/10 flex-shrink-0 mt-0.5" />
+      <div className="flex-1 flex flex-col gap-2 pt-0.5">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-24 bg-white/10 rounded-full" />
+          <div className="h-2.5 w-16 bg-white/[0.07] rounded-full" />
+          <div className="h-2.5 w-8 bg-white/[0.07] rounded-full ml-auto" />
+        </div>
+        <div className="h-4 w-3/4 bg-white/10 rounded" />
+        <div className="h-3 w-full bg-white/[0.07] rounded" />
+        <div className="h-3 w-1/2 bg-white/[0.07] rounded" />
       </div>
     </div>
   );
@@ -326,7 +329,7 @@ function TopRankersSidebar() {
   }, []);
 
   const isRankers = listType === 'rankers';
-  const displayList = data[listType];
+  const displayList = data[listType].slice(0, 8);
 
   return (
     <div className={`card p-4 transition-colors duration-300 ${isRankers ? 'border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-amber-400/5' : 'border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-400/5'}`}>
@@ -375,7 +378,8 @@ function TopRankersSidebar() {
       ) : displayList.length === 0 ? (
         <div className="text-xs text-slate-500 py-4 text-center">No users found.</div>
       ) : (
-        <ol className="flex flex-col gap-2">
+        <div className="max-h-[380px] overflow-y-auto scrollbar-hide">
+          <ol className="flex flex-col gap-2">
           {displayList.map((user, idx) => {
             const color = rankColor(user.rank);
             const medals = ['🥇', '🥈', '🥉'];
@@ -402,12 +406,8 @@ function TopRankersSidebar() {
                 {/* Name + rank */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-semibold text-slate-200 truncate">{user.username}</span>
-                    {user.isWingMember && (
-                      <svg className="w-2.5 h-2.5 text-yellow-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/>
-                      </svg>
-                    )}
+                    <a href={`/profile/${user.username}`} className="text-xs font-semibold text-slate-200 truncate hover:text-accent transition-colors">{user.username}</a>
+                    {/* Wing tag removed as per request */}
                   </div>
                   <span className="text-[10px] capitalize" style={{ color }}>
                     {user.rank ? user.rank.replace(/\b\w/g, c => c.toUpperCase()) : 'Unranked'}
@@ -421,7 +421,8 @@ function TopRankersSidebar() {
               </li>
             );
           })}
-        </ol>
+          </ol>
+        </div>
       )}
     </div>
   );
@@ -516,14 +517,19 @@ export default function HubPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex">
+          <div className="flex items-center gap-1">
+            {/* Contests link */}
+            <a href="/contests" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm" title="Contests Hub">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              Contests
+            </a>
             {!user ? (
               <a href="/auth" className="text-sm text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:block">
-                Log In / Sign Up
+                Log In
               </a>
             ) : !user.isVerified ? (
               <a href="/verify" className="text-sm text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-400/5 transition-colors hidden sm:block font-semibold">
-                Verify CF Account
+                Verify CF
               </a>
             ) : (
               <a
@@ -536,6 +542,12 @@ export default function HubPage() {
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
                 Editorials
+              </a>
+            )}
+            {user && (
+              <a href={`/profile/${user.username}`} className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Profile
               </a>
             )}
             <button
@@ -584,24 +596,18 @@ export default function HubPage() {
                 >
                   <span>{tab.emoji}</span>
                   {tab.label}
-                  {tab.key !== 'all' && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-0.5
-                      ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-500'}`}>
-                      {MOCK_POSTS.filter(p => p.category === tab.key).length}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
 
-            {/* ── Post list ── */}
-            <div className="flex flex-col gap-3">
+            {/* ── Post list — flat Twitter-style feed ── */}
+            <div className="bg-bg-card border border-white/[0.07] rounded-2xl overflow-hidden">
               {loading ? (
-                Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+                Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
               ) : filtered.length === 0 ? (
-                <div className="card p-12 text-center">
-                  <div className="text-4xl mb-3">🔍</div>
-                  <p className="text-slate-400 font-medium">No posts found</p>
+                <div className="py-16 text-center">
+                  <div className="text-5xl mb-3">🔍</div>
+                  <p className="text-slate-400 font-semibold">No posts found</p>
                   <p className="text-slate-600 text-sm mt-1">Be the first to post in this category!</p>
                 </div>
               ) : (
@@ -620,10 +626,8 @@ export default function HubPage() {
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Community</h2>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: 'Total',   value: MOCK_POSTS.length },
-                  { label: 'Members', value: '142'  },
-                  { label: 'Insights', value: MOCK_POSTS.filter(p=>p.category==='Insight').length   },
-                  { label: 'Doubts',  value: MOCK_POSTS.filter(p=>p.category==='Doubt').length },
+                  { label: 'Total Posts', value: posts.length },
+                  { label: 'Platform', value: 'Live' },
                 ].map(s => (
                   <div key={s.label} className="bg-bg-surface rounded-lg p-3 text-center border border-white/[0.05]">
                     <div className="text-xl font-extrabold text-slate-100 font-mono">{s.value}</div>

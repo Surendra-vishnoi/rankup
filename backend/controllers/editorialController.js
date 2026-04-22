@@ -14,11 +14,8 @@ export const createEditorial = async (req, res) => {
       });
     }
 
-    if (!/^\d+[A-Za-z]*$/.test(questionNumber.trim())) {
-      return res.status(400).json({
-        message: 'Question number must be a valid CF problem ID (e.g. 158A, 1234B).',
-      });
-    }
+    // Removed strict regex to allow direct links or problem IDs
+    const cleanQuestionNumber = questionNumber.trim();
 
     const allowedCats = ['Insight', 'Doubt'];
     const finalCategory = allowedCats.includes(category) ? category : 'Insight';
@@ -33,14 +30,18 @@ export const createEditorial = async (req, res) => {
       content:        solution.trim(),   // used for any fallback preview
       author:         req.user.id,
       category:       finalCategory,
-      cfProblemId:    questionNumber.trim(),
+      cfProblemId:    cleanQuestionNumber,
       isEditorial:    true,
-      questionNumber: questionNumber.trim(),
+      questionNumber: cleanQuestionNumber,
       hints:          cleanHints,
       solution:       solution.trim(),
     });
 
     await post.save();
+
+    // Increment author's karma (5 for editorial)
+    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 5 } });
+
     await post.populate('author', 'username cfHandle rank rating isWingMember isVerified');
 
     res.status(201).json({ post });

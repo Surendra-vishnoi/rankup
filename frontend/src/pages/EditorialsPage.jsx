@@ -137,11 +137,6 @@ function HintRow({ index, text }) {
           <span className={`text-sm font-semibold ${col.label}`}>
             Hint {index + 1}
           </span>
-          {!open && (
-            <span className="text-xs text-slate-600 truncate max-w-[280px] hidden sm:block">
-              — {text.replace(/[*_`#$]/g, '').slice(0, 65)}{text.length > 65 ? '…' : ''}
-            </span>
-          )}
         </div>
         <svg
           className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -178,7 +173,6 @@ function SolutionSection({ solution }) {
             </svg>
           </span>
           <span className="text-sm font-semibold text-accent-light">Full Solution</span>
-          {!open && <span className="text-xs text-slate-600 hidden sm:block">— click to reveal</span>}
         </div>
         <svg
           className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -284,14 +278,7 @@ function EditorialCard({ post }) {
               </svg>
               {post.upvotes?.length ?? 0}
             </span>
-            {hints.length > 0 && (
-              <span className="flex items-center gap-1 text-amber-500/70">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm0-4h-2V7h2v8z"/>
-                </svg>
-                {hints.length} hint{hints.length > 1 ? 's' : ''}
-              </span>
-            )}
+            {/* Hint count removed as per request */}
           </div>
         </div>
       </button>

@@ -177,7 +177,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
               {(post.author?.username || '?')[0].toUpperCase()}
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-200">{post.author?.username || 'Anonymous'}</span>
+              <a href={`/profile/${post.author?.username || ''}`} className="text-sm font-semibold text-slate-200 hover:text-accent transition-colors">{post.author?.username || 'Anonymous'}</a>
               <div className="flex items-center gap-2">
                 {post.author?.cfHandle && (
                   <span className="text-xs text-accent">@{post.author.cfHandle}</span>
@@ -250,9 +250,9 @@ export default function PostViewModal({ post, onClose, currentUser }) {
                       <div key={c._id} className="group relative flex flex-col gap-2 p-3 rounded-lg bg-bg-surface border border-white/[0.05]">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-300">
+                            <a href={`/profile/${c.author?.username || ''}`} className="text-xs font-bold text-slate-300 hover:text-accent transition-colors">
                               {c.author?.username || 'Unknown'}
-                            </span>
+                            </a>
                             {c.author?.isWingMember && (
                               <svg className="w-3 h-3 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/>
