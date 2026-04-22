@@ -1,6 +1,7 @@
 {
   "name": "rankup-root",
   "version": "1.0.0",
+  "private": true,
   "description": "Root orchestrator for RankUp MERN platform",
   "workspaces": [
     "backend",
