@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import MarkdownRenderer from '../components/MarkdownRenderer.jsx';
 import { cfRankColor } from '../utils/cfRank.js';
+import { API_BASE } from '../apiConfig';
 
 /* ── Shared helpers ── */
 function timeAgo(dateStr) {
@@ -343,7 +344,7 @@ export default function EditorialsPage() {
   const [catFilter, setCatFilter]   = useState('all');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/editorials', { credentials: 'include' })
+    fetch(`${API_BASE}/api/editorials`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => setEditorials(d.posts?.length ? d.posts : MOCK_EDITORIALS))
       .catch(() => setEditorials(MOCK_EDITORIALS))

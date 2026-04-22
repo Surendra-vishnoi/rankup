@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import PostCard from '../components/PostCard.jsx';
 import CreatePostModal from '../components/CreatePostModal.jsx';
 import PostViewModal from '../components/PostViewModal.jsx';
+import { API_BASE } from '../apiConfig';
 
 const TABS = [
   { key: 'all',      label: 'All',      emoji: '🌐' },
@@ -309,9 +310,9 @@ function TopRankersSidebar() {
 
   useEffect(() => {
     Promise.all([
-      fetch('http://localhost:5000/api/users/top-rankers', { credentials: 'include' })
+      fetch(`${API_BASE}/api/users/top-rankers`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : { rankers: [] }),
-      fetch('http://localhost:5000/api/users/top-contributors', { credentials: 'include' })
+      fetch(`${API_BASE}/api/users/top-contributors`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : { contributors: [] })
     ])
       .then(([rankersRes, contributorsRes]) => {
@@ -436,7 +437,7 @@ export default function HubPage() {
   const [user, setUser]             = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/auth/verify', { credentials: 'include' })
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
         if (data.isAuthenticated) setUser(data.user);
@@ -448,8 +449,8 @@ export default function HubPage() {
     setLoading(true);
     try {
       const url = activeTab === 'all'
-        ? 'http://localhost:5000/api/posts'
-        : `http://localhost:5000/api/posts?category=${activeTab}`;
+        ? `${API_BASE}/api/posts`
+        : `${API_BASE}/api/posts?category=${activeTab}`;
       const res  = await fetch(url, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();

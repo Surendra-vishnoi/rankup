@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE } from '../apiConfig';
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -26,7 +27,7 @@ export default function AuthPage() {
         ? { username: form.username.trim(), password: form.password }
         : { username: form.username.trim(), cfHandle: form.cfHandle.trim(), password: form.password };
 
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

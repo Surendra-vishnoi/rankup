@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE } from '../apiConfig';
 
 const CATEGORIES = [
   { value: 'Insight',   label: 'Insight',   emoji: '💡', desc: 'Share an insight, trick, or discovery' },
@@ -24,7 +25,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
     try {
       const body = { ...form };
       if (form.category !== 'Doubt') delete body.cfProblemId;
-      const res  = await fetch('http://localhost:5000/api/posts', {
+      const res  = await fetch(`${API_BASE}/api/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

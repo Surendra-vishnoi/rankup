@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../apiConfig';
 
 export default function AdminPage() {
   const [username, setUsername] = useState('');
@@ -7,7 +8,7 @@ export default function AdminPage() {
   const [authState, setAuthState] = useState('checking'); // 'checking' | 'authorized' | 'denied'
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/auth/verify', { credentials: 'include' })
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => {
         if (data.isAuthenticated && data.user?.username === 'Surendra_vishnoi') {
@@ -50,7 +51,7 @@ export default function AdminPage() {
     setStatus({ type: '', message: '' });
 
     try {
-      const res = await fetch('http://localhost:5000/api/users/make-wing-member', {
+      const res = await fetch(`${API_BASE}/api/users/make-wing-member`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim() }),

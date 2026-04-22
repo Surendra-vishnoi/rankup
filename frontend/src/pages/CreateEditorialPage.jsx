@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import MarkdownRenderer from '../components/MarkdownRenderer.jsx';
+import { API_BASE } from '../apiConfig';
 
 const CATEGORIES = [
   { value: 'Insight',   label: 'Insight',   emoji: '💡', desc: 'Insight or technique editorial' },
@@ -73,7 +74,7 @@ export default function CreateEditorialPage() {
 
   /* ── Auth guard ── */
   useEffect(() => {
-    fetch('http://localhost:5000/api/auth/verify', { credentials: 'include' })
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(data => {
         if (!data.isAuthenticated)    { setAuthState('not-auth'); return; }
@@ -93,7 +94,7 @@ export default function CreateEditorialPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/editorials', {
+      const res = await fetch(`${API_BASE}/api/editorials`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

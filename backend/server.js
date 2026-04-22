@@ -11,6 +11,12 @@ import { startCfSyncJob } from './jobs/syncCfRatings.js';
 import editorialRoutes from './routes/editorials.js';
 import commentRoutes from './routes/comments.js';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const app = express();
@@ -39,9 +45,25 @@ app.use('/api', usersRoutes);
 app.use('/api', editorialRoutes);
 app.use('/api', commentRoutes);
 
-app.get('/', (req, res) => {
-  res.send('RankUp API is running');
-});
+// --- SERVING FRONTEND FOR PRODUCTION ---
+if (process.env.NODE_ENV === 'production') {
+  // Use relative path to frontend/dist (from backend/)
+  const frontendPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(frontendPath));
+  
+  app.get('*', (req, res) => {
+    // Exclude API routes from catch-all if they aren't matched above
+    if (!req.path.startsWith('/api/')) {
+        res.sendFile(path.join(frontendPath, 'index.html'));
+    } else {
+        res.status(404).json({ message: 'API Route Not Found' });
+    }
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('RankUp API is running (Development Mode)');
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

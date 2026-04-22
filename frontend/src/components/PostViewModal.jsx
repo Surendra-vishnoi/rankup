@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import MarkdownRenderer from './MarkdownRenderer.jsx';
 import { cfRankColor } from '../utils/cfRank.js';
+import { API_BASE } from '../apiConfig';
 
 const CATEGORY_META = {
   Insight:   { label: 'Insight',   emoji: '💡', color: 'text-yellow-400',  border: 'border-yellow-500/40', bg: 'bg-yellow-400/10' },
@@ -37,7 +38,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
 
   const fetchComments = async (pageNumber) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${post._id}/comments?page=${pageNumber}`);
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}/comments?page=${pageNumber}`);
       if (res.ok) {
         const data = await res.json();
         if (pageNumber === 1) {
@@ -56,7 +57,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
     if (!newComment.trim() || loadingComments || !currentUser) return;
     setLoadingComments(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${post._id}/comments`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newComment }),
@@ -79,7 +80,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
+      const res = await fetch(`${API_BASE}/api/comments/${commentId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -94,7 +95,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
   const handleDeletePost = async () => {
     if (!window.confirm("DESTROY POST: Are you absolutely sure?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${post._id}`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}`, {
         method: 'DELETE',
         credentials: 'include'
       });

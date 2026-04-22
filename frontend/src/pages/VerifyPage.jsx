@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE } from '../apiConfig';
 
 /* ── CF rank helper (inline for this page) ── */
 const cfRankColor = (rank = '') => {
@@ -49,7 +50,7 @@ export default function VerifyPage() {
     setStatus(null);
     setProfile(null);
     try {
-      const res  = await fetch('http://localhost:5000/api/verify-handle', {
+      const res  = await fetch(`${API_BASE}/api/verify-handle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

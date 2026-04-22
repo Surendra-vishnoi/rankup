@@ -1,5 +1,6 @@
 import { cfRankColor } from '../utils/cfRank.js';
 import { useState } from 'react';
+import { API_BASE } from '../apiConfig';
 
 const CATEGORY_META = {
   Insight:   { label: 'Insight',   emoji: '💡', color: 'text-yellow-400',  border: 'border-yellow-400/30', bg: 'bg-yellow-400/10' },
@@ -35,7 +36,7 @@ export default function PostCard({ post, onOpen }) {
 
     if (post._id?.startsWith('m')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${post._id}/upvote`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}/upvote`, {
         method: 'POST',
         credentials: 'include',
       });
