@@ -1,4 +1,5 @@
 import Post from '../models/Post.js';
+import Comment from '../models/Comment.js';
 
 /**
  * POST /api/editorials
@@ -64,7 +65,24 @@ export const getEditorials = async (req, res) => {
       .populate('author', 'username cfHandle rank rating isWingMember isVerified')
       .sort({ createdAt: -1 })
       .limit(50);
-    res.json({ posts });
+
+    // Fetch comment counts
+    const postIds = posts.map(p => p._id);
+    const commentCounts = await Comment.aggregate([
+      { $match: { post: { $in: postIds } } },
+      { $group: { _id: '$post', count: { $sum: 1 } } }
+    ]);
+
+    const countMap = {};
+    commentCounts.forEach(c => { countMap[c._id.toString()] = c.count; });
+
+    const postsWithCounts = posts.map(p => {
+      const plain = p.toObject();
+      plain.commentsCount = countMap[p._id.toString()] || 0;
+      return plain;
+    });
+
+    res.json({ posts: postsWithCounts });
   } catch (err) {
     console.error('getEditorials error:', err);
     res.status(500).json({ message: 'Server error.' });

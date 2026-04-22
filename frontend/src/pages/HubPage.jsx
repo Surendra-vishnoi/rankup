@@ -14,7 +14,7 @@ const TABS = [
 /* ── Skeleton card — Twitter-style ── */
 function SkeletonCard() {
   return (
-    <div className="flex gap-3 px-4 py-4 border-b border-white/[0.06] animate-pulse">
+    <div className="card flex gap-3 px-4 py-4 animate-pulse">
       <div className="w-10 h-10 rounded-full bg-white/10 flex-shrink-0 mt-0.5" />
       <div className="flex-1 flex flex-col gap-2 pt-0.5">
         <div className="flex items-center gap-2">
@@ -600,8 +600,8 @@ export default function HubPage() {
               ))}
             </div>
 
-            {/* ── Post list — flat Twitter-style feed ── */}
-            <div className="bg-bg-card border border-white/[0.07] rounded-2xl overflow-hidden">
+            {/* ── Post list ── */}
+            <div className="flex flex-col gap-3">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
               ) : filtered.length === 0 ? (

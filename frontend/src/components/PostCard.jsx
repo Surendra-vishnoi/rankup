@@ -90,71 +90,39 @@ export default function PostCard({ post, onOpen }) {
       tabIndex={0}
       role="button"
       aria-label={`Open post: ${post.title}`}
-      className="group relative flex gap-3 px-4 py-4 cursor-pointer
-        border-b border-white/[0.06] last:border-b-0
-        hover:bg-white/[0.025] transition-colors duration-150 outline-none
-        focus-visible:bg-white/[0.025]"
+      className="card group relative flex flex-col gap-3 px-5 py-4 cursor-pointer
+        hover:bg-white/[0.04] transition-all duration-150 outline-none
+        hover:scale-[1.005] active:scale-[0.998] focus-visible:bg-white/[0.04]"
     >
       {/* Wing accent stripe */}
       {isWing && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r bg-gradient-to-b from-yellow-400/80 via-amber-500/60 to-transparent" />
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r bg-gradient-to-b from-yellow-400 via-amber-500 to-transparent" />
       )}
 
-      {/* Left: Avatar column */}
-      <a
-        href={`/profile/${post.author?.username || ''}`}
-        onClick={e => e.stopPropagation()}
-        className="flex-shrink-0 mt-0.5"
-        tabIndex={-1}
-      >
-        <Avatar username={post.author?.username} rank={rank} isWingMember={isWing} size={10} />
-      </a>
-
-      {/* Right: Content column */}
-      <div className="flex-1 min-w-0">
-
-        {/* Row 1: Author · rank · time */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-1">
-          <a
-            href={`/profile/${post.author?.username || ''}`}
-            onClick={e => e.stopPropagation()}
-            className="text-sm font-bold text-slate-100 hover:underline underline-offset-2 leading-none"
-          >
-            {post.author?.username || 'Anonymous'}
-          </a>
-          {isWing && (
-            <span className="badge-wing ml-1 shadow-none py-0 px-1.5 h-4 flex items-center">
-              Wing Member
-            </span>
-          )}
-          {rank && (
-            <span
-              className="text-[11px] font-semibold capitalize leading-none"
-              style={{ color }}
-            >
-              {rank.replace(/\b\w/g, c => c.toUpperCase())}
-            </span>
-          )}
-          <span className="text-slate-600 text-[11px] leading-none">·</span>
-          <span className="text-slate-500 text-[11px] leading-none flex-shrink-0">
-            {post.createdAt ? timeAgo(post.createdAt) : ''}
+      {/* Top Header: Category, Wing Tag, Time */}
+      <div className="flex items-center gap-2 mb-0.5">
+        <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded border ${cat.bg} ${cat.text}`}>
+          {cat.emoji} {cat.label}
+        </span>
+        {isWing && (
+          <span className="badge-wing shadow-none py-0 px-1.5 h-4 flex items-center text-[9px] uppercase tracking-tighter">
+            Wing Member
           </span>
+        )}
+        <span className="text-slate-600 text-[11px] ml-auto">
+          {post.createdAt ? timeAgo(post.createdAt) : ''}
+        </span>
+      </div>
 
-          {/* Category pill — pushed to right on large screens */}
-          <span className={`ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cat.bg} ${cat.text} hidden sm:inline-flex items-center gap-1`}>
-            {cat.emoji} {cat.label}
-          </span>
-        </div>
-
-        {/* Row 2: Title */}
-        <h2 className={`text-[15px] font-bold leading-snug mb-1.5 group-hover:text-accent transition-colors duration-150
+      {/* Main Content Area */}
+      <div className="flex flex-col gap-1.5">
+        <h2 className={`text-lg font-bold leading-tight group-hover:text-accent transition-colors duration-150
           ${isWing ? 'text-yellow-50' : 'text-slate-100'}`}>
           {post.title}
         </h2>
 
-        {/* Row 3: Content preview */}
         {preview && (
-          <p className="text-slate-400 text-[13.5px] leading-relaxed line-clamp-2 mb-2">
+          <p className="text-slate-400 text-[14px] leading-relaxed line-clamp-2">
             {preview.slice(0, PREVIEW_LENGTH)}
             {preview.length > PREVIEW_LENGTH && (
               <span className="text-slate-600"> … <span className="text-accent/80 text-xs">read more</span></span>
@@ -162,16 +130,15 @@ export default function PostCard({ post, onOpen }) {
           </p>
         )}
 
-        {/* Row 4: CF problem link (inline chip) */}
         {post.cfProblemId && (
           <a
             href={`https://codeforces.com/problemset/problem/${post.cfProblemId.replace(/([A-Za-z])/, '/$1')}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 mb-2 rounded-md
+            className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 w-fit rounded-md
               bg-blue-500/10 border border-blue-500/20 text-blue-400
-              hover:bg-blue-500/20 transition-colors"
+              hover:bg-blue-500/20 transition-colors mt-1"
           >
             <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
@@ -179,50 +146,56 @@ export default function PostCard({ post, onOpen }) {
             CF {post.cfProblemId}
           </a>
         )}
+      </div>
 
-        {/* Row 5: Action bar */}
-        <div className="flex items-center gap-1 mt-1 -ml-1.5">
+      {/* Bottom Footer: Author Info + Actions */}
+      <div className="mt-2 pt-3 border-t border-white/[0.05] flex items-center justify-between gap-4">
+        
+        {/* Author Info */}
+        <div className="flex items-center gap-2">
+          <Avatar username={post.author?.username} rank={rank} isWingMember={isWing} size={6} />
+          <div className="flex flex-col">
+            <a
+              href={`/profile/${post.author?.username || ''}`}
+              onClick={e => e.stopPropagation()}
+              className="text-xs font-bold text-slate-200 hover:text-accent transition-colors leading-none"
+            >
+              {post.author?.username || 'Anonymous'}
+            </a>
+            {rank && (
+              <span className="text-[10px] font-semibold capitalize mt-0.5" style={{ color }}>
+                {rank.replace(/\b\w/g, c => c.toUpperCase())}
+              </span>
+            )}
+          </div>
+        </div>
 
-          {/* Upvote */}
+        {/* Interaction Actions */}
+        <div className="flex items-center gap-1">
           <button
             id={`upvote-${post._id}`}
             onClick={handleUpvote}
-            aria-label={upvoted ? 'Remove upvote' : 'Upvote post'}
-            aria-pressed={upvoted}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold
-              transition-all duration-150 group/btn
-              ${upvoted
-                ? 'text-accent bg-accent/10'
-                : 'text-slate-500 hover:text-accent hover:bg-accent/10'
-              }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold
+              transition-all duration-150
+              ${upvoted ? 'text-accent bg-accent/10' : 'text-slate-400 hover:text-accent hover:bg-white/5'}`}
           >
             <svg
-              className={`w-4 h-4 transition-transform duration-200 ${upvoteAnim ? 'scale-125' : 'scale-100'}`}
-              viewBox="0 0 24 24"
-              fill={upvoted ? 'currentColor' : 'none'}
-              stroke="currentColor"
-              strokeWidth="1.8"
+              className={`w-4 h-4 ${upvoteAnim ? 'scale-125' : 'scale-100'} transition-transform`}
+              viewBox="0 0 24 24" fill={upvoted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"
             >
               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
               <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
             </svg>
-            <span>{upvoteCount}</span>
+            {upvoteCount}
           </button>
 
-          {/* View / comment count — decorative */}
-          <button
-            onClick={e => { e.stopPropagation(); onOpen?.(post); }}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold
-              text-slate-500 hover:text-sky-400 hover:bg-sky-400/10 transition-all duration-150"
-            aria-label="View comments"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
-            <span>Reply</span>
-          </button>
+            {post.commentsCount ?? 0}
+          </div>
 
-          {/* Category pill — mobile only (already shown in row 1 on sm+) */}
           <span className={`ml-auto sm:hidden text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cat.bg} ${cat.text} inline-flex items-center gap-1`}>
             {cat.emoji}
           </span>
