@@ -51,13 +51,22 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
   
-  app.get(/(.*)/, (req, res) => {
-    // Exclude API routes from catch-all if they aren't matched above
-    if (!req.path.startsWith('/api/')) {
-        res.sendFile(path.join(frontendPath, 'index.html'));
-    } else {
-        res.status(404).json({ message: 'API Route Not Found' });
+  // Express 5.x modern catch-all: Use middleware instead of `app.get('*')`
+  // since path-to-regexp v8 no longer supports unnamed wildcards.
+  app.use((req, res, next) => {
+    // Exclude API routes from catch-all (they should 404 natively if unmatched)
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ message: 'API Route Not Found' });
     }
+    
+    // Serve the React app
+    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+      if (err) {
+        // If file is missing, it means frontend didn't build correctly.
+        console.error('Failed to serve index.html:', err);
+        res.status(404).send('Frontend build not found. The React app is not being served.');
+      }
+    });
   });
 } else {
   app.get('/', (req, res) => {
