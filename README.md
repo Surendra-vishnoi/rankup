@@ -1,5 +1,7 @@
 # RankUp ⚡
 
+[![Live Site](https://img.shields.io/badge/Live-Site-emerald?style=for-the-badge&logo=render&logoColor=white)](https://rankup-zvji.onrender.com/)
+
 **RankUp** is a premium, high-performance community platform designed for Codeforces enthusiasts and competitive programmers. It bridges the gap between problem-solving and community discussion, offering a seamless, glass-morphic experience for sharing insights, tracking contests, and accessing official editorials.
 
 ## 🚀 Key Features
