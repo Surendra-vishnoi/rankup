@@ -135,7 +135,9 @@ export default function PostViewModal({ post, onClose, currentUser }) {
               )}
               {post.cfProblemId && (
                 <a
-                  href={`https://codeforces.com/problemset/problem/${post.cfProblemId.replace(/([A-Za-z])/, '/$1')}`}
+                  href={post.cfProblemId.startsWith('http')
+                    ? post.cfProblemId
+                    : `https://codeforces.com/problemset/problem/${post.cfProblemId.replace(/([A-Za-z])/, '/$1')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-md bg-accent-cf/10 border border-accent-cf/30 text-accent-cf hover:bg-accent-cf/20 transition-colors"
@@ -143,7 +145,9 @@ export default function PostViewModal({ post, onClose, currentUser }) {
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
                   </svg>
-                  CF {post.cfProblemId}
+                  CF {post.cfProblemId.startsWith('http')
+                    ? (post.cfProblemId.split('/').filter(Boolean).pop() || 'Link')
+                    : post.cfProblemId}
                 </a>
               )}
             </div>

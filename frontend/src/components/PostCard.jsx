@@ -132,7 +132,9 @@ export default function PostCard({ post, onOpen }) {
 
         {post.cfProblemId && (
           <a
-            href={`https://codeforces.com/problemset/problem/${post.cfProblemId.replace(/([A-Za-z])/, '/$1')}`}
+            href={post.cfProblemId.startsWith('http')
+              ? post.cfProblemId
+              : `https://codeforces.com/problemset/problem/${post.cfProblemId.replace(/([A-Za-z])/, '/$1')}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
@@ -143,7 +145,9 @@ export default function PostCard({ post, onOpen }) {
             <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
             </svg>
-            CF {post.cfProblemId}
+            CF {post.cfProblemId.startsWith('http')
+              ? (post.cfProblemId.split('/').filter(Boolean).pop() || 'Link')
+              : post.cfProblemId}
           </a>
         )}
       </div>

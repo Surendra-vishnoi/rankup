@@ -239,7 +239,9 @@ function EditorialCard({ post }) {
         {/* CF problem number */}
         {post.questionNumber && (
           <a
-            href={`https://codeforces.com/problemset/problem/${post.questionNumber.replace(/([A-Za-z])/, '/$1')}`}
+            href={post.questionNumber.startsWith('http') 
+              ? post.questionNumber 
+              : `https://codeforces.com/problemset/problem/${post.questionNumber.replace(/([A-Za-z])/, '/$1')}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
@@ -249,7 +251,9 @@ function EditorialCard({ post }) {
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
             </svg>
-            CF {post.questionNumber}
+            CF {post.questionNumber.startsWith('http') 
+              ? (post.questionNumber.split('/').filter(Boolean).pop() || 'Link') 
+              : post.questionNumber}
           </a>
         )}
 

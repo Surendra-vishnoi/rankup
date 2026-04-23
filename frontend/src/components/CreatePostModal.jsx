@@ -96,18 +96,18 @@ export default function CreatePostModal({ onClose, onCreated }) {
           {form.category === 'Doubt' && (
             <div className="animate-fade-up">
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="cf-problem-id">
-                Codeforces Problem ID
+                Question Link or Problem ID
               </label>
               <input
                 id="cf-problem-id"
-                className="input-field"
+                className="input-field font-mono"
                 type="text"
-                placeholder="e.g. 1A or 1234B"
+                placeholder="e.g. 158A or https://codeforces.com/..."
                 value={form.cfProblemId}
                 onChange={e => set('cfProblemId', e.target.value)}
               />
               <p className="text-[11px] text-slate-500 mt-1">
-                The problem you need help with — e.g. <span className="font-mono">1A</span> for Theatre Square.
+                The problem link or Codeforces ID (e.g. <span className="font-mono">1A</span>).
               </p>
             </div>
           )}
