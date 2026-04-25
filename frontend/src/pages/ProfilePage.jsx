@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [actLoading, setActLoading] = useState(true);
   const [error, setError]         = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showEditRoles, setShowEditRoles] = useState(false);
 
   // Fetch current session
   useEffect(() => {
@@ -157,6 +158,20 @@ export default function ProfilePage() {
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
               Contests
             </a>
+            {currentUser?.isAdmin && (
+              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors flex items-center gap-1.5 font-bold">
+                🛡️ Admin
+              </a>
+            )}
+            {currentUser && (
+              <button
+                onClick={handleLogout}
+                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-semibold"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -222,7 +237,24 @@ export default function ProfilePage() {
                       You
                     </span>
                   )}
-                  {user?.isWingMember && (
+                  {currentUser?.isAdmin && !isOwn && (
+                    <button
+                      onClick={() => setShowEditRoles(true)}
+                      className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors ml-2"
+                    >
+                      Edit Roles
+                    </button>
+                  )}
+                  {user?.isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/40">
+                      🛡️ Admin
+                    </span>
+                  )}
+                  {user?.isCoordinator ? (
+                    <span className="badge-coordinator">
+                      👑 Coordinator
+                    </span>
+                  ) : user?.isWingMember && (
                     <span className="badge-wing">
                       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/></svg>
                       Wing Member
@@ -238,20 +270,27 @@ export default function ProfilePage() {
 
                 {/* CF handle + rank */}
                 {user?.cfHandle && (
-                  <a
-                    href={`https://codeforces.com/profile/${user.cfHandle}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold mb-2 hover:underline"
-                    style={{ color }}
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                    {user.cfHandle}
-                    {(cfStats.rank || user.rank) && (
-                      <span className="ml-1 capitalize font-normal text-xs opacity-80">
-                        · {(cfStats.rank || user.rank).replace(/\b\w/g, c => c.toUpperCase())}
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <a
+                      href={`https://codeforces.com/profile/${user.cfHandle}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                      style={{ color }}
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                      {user.cfHandle}
+                      {(cfStats.rank || user.rank) && (
+                        <span className="ml-1 capitalize font-normal text-xs opacity-80">
+                          · {(cfStats.rank || user.rank).replace(/\b\w/g, c => c.toUpperCase())}
+                        </span>
+                      )}
+                    </a>
+                    {user?.customTitle && (
+                      <span className="text-xs font-bold text-slate-300 px-2 py-0.5 border border-white/10 rounded ml-2">
+                        {user.customTitle}
                       </span>
                     )}
-                  </a>
+                  </div>
                 )}
 
                 <p className="text-xs text-slate-500">
@@ -340,6 +379,15 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* Edit Roles Modal */}
+      {showEditRoles && (
+        <EditRolesModal
+          user={user}
+          onClose={() => setShowEditRoles(false)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 }
@@ -441,6 +489,78 @@ function EmptyState({ icon, text }) {
     <div className="py-12 text-center">
       <div className="text-4xl mb-3">{icon}</div>
       <p className="text-slate-500 text-sm">{text}</p>
+    </div>
+  );
+}
+
+function EditRolesModal({ user, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    isAdmin: user.isAdmin || false,
+    isWingMember: user.isWingMember || false,
+    isCoordinator: user.isCoordinator || false,
+    customTitle: user.customTitle || ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${user.username}/roles`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(form)
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || 'Failed to update roles');
+      }
+      onSuccess();
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="card p-6 w-full max-w-sm">
+        <h2 className="text-lg font-bold text-slate-100 mb-4">Edit Roles: {user.username}</h2>
+        {error && <div className="text-red-400 text-sm mb-4 bg-red-400/10 p-2 rounded">{error}</div>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.isAdmin} onChange={e => setForm({...form, isAdmin: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <span className="text-sm font-semibold text-slate-200">Is Admin</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.isCoordinator} onChange={e => setForm({...form, isCoordinator: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <span className="text-sm font-semibold text-slate-200">Is Coordinator</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={form.isWingMember} onChange={e => setForm({...form, isWingMember: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <span className="text-sm font-semibold text-slate-200">Is Wing Member</span>
+          </label>
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">Custom Title</label>
+            <input 
+              type="text" 
+              value={form.customTitle} 
+              onChange={e => setForm({...form, customTitle: e.target.value})} 
+              className="input-field py-1.5" 
+              placeholder="e.g. Master Chef" 
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <button type="button" onClick={onClose} className="btn-ghost px-4 py-2">Cancel</button>
+            <button type="submit" disabled={loading} className="btn-primary px-4 py-2 disabled:opacity-50">
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

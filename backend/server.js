@@ -25,11 +25,12 @@ const app = express();
 const httpServer = createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const ALLOWED_ORIGINS = [CLIENT_URL, 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:5175'];
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: CLIENT_URL,
+  origin: ALLOWED_ORIGINS,
   credentials: true
 }));
 

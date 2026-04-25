@@ -43,7 +43,7 @@ export const createEditorial = async (req, res) => {
     // Increment author's karma (5 for editorial)
     await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 5 } });
 
-    await post.populate('author', 'username cfHandle rank rating isWingMember isVerified');
+    await post.populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle isVerified');
 
     res.status(201).json({ post });
   } catch (err) {
@@ -62,7 +62,7 @@ export const getEditorials = async (req, res) => {
     if (req.query.category) filter.category = req.query.category;
 
     const posts = await Post.find(filter)
-      .populate('author', 'username cfHandle rank rating isWingMember isVerified')
+      .populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle isVerified')
       .sort({ createdAt: -1 })
       .limit(50);
 

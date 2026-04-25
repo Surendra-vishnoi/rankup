@@ -446,6 +446,15 @@ export default function HubPage() {
       .catch(() => setUser(null));
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      window.location.reload();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
+
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
@@ -544,11 +553,25 @@ export default function HubPage() {
                 Editorials
               </a>
             )}
+            {user?.isAdmin && (
+              <a href="/admin" className="text-purple-400 hover:text-purple-300 px-2.5 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors hidden sm:flex items-center gap-1.5 text-sm font-bold" title="Admin Console">
+                🛡️ Admin
+              </a>
+            )}
             {user && (
               <a href={`/profile/${user.username}`} className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Profile
               </a>
+            )}
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="text-red-400 hover:text-red-300 px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors hidden sm:flex items-center gap-1.5 text-sm font-semibold"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+              </button>
             )}
             <button
               id="create-post-btn"

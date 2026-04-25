@@ -18,7 +18,7 @@ export const getContestMessages = async (req, res) => {
 // POST /api/contests/:id/chat
 export const postContestMessage = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, parentMessage } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ message: 'Message text is required.' });
     }
@@ -32,6 +32,7 @@ export const postContestMessage = async (req, res) => {
       contest: contest._id,
       author: req.user.id,
       text: text.trim(),
+      parentMessage: parentMessage || null,
     });
 
     await msg.save();

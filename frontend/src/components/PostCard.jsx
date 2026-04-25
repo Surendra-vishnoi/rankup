@@ -49,6 +49,7 @@ export default function PostCard({ post, onOpen }) {
   const rank   = post.author?.rank || '';
   const color  = cfRankColor(rank);
   const isWing = post.author?.isWingMember === true;
+  const isCoordinator = post.author?.isCoordinator === true;
 
   const [upvoteCount, setUpvoteCount] = useState(post.upvotes?.length ?? 0);
   const [upvoted, setUpvoted]         = useState(false);
@@ -104,7 +105,11 @@ export default function PostCard({ post, onOpen }) {
         <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded border ${cat.bg} ${cat.text}`}>
           {cat.emoji} {cat.label}
         </span>
-        {isWing && (
+        {isCoordinator ? (
+          <span className="badge-coordinator shadow-none py-0 px-1.5 h-4 flex items-center text-[9px] uppercase tracking-tighter">
+            Coordinator
+          </span>
+        ) : isWing && (
           <span className="badge-wing shadow-none py-0 px-1.5 h-4 flex items-center text-[9px] uppercase tracking-tighter">
             Wing Member
           </span>
@@ -166,7 +171,11 @@ export default function PostCard({ post, onOpen }) {
             >
               {post.author?.username || 'Anonymous'}
             </a>
-            {rank && (
+            {post.author?.customTitle ? (
+              <span className="text-[10px] font-bold text-slate-300 mt-0.5 tracking-wide">
+                {post.author.customTitle}
+              </span>
+            ) : rank && (
               <span className="text-[10px] font-semibold capitalize mt-0.5" style={{ color }}>
                 {rank.replace(/\b\w/g, c => c.toUpperCase())}
               </span>

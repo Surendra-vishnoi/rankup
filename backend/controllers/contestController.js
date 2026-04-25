@@ -43,17 +43,15 @@ export const getContestById = async (req, res) => {
 export const createContest = async (req, res) => {
   try {
 
-    const { title, description, cfContestId, startTime, endTime, difficulty, isWingContest, topPerformers } = req.body;
+    const { title, description, contestLink, standingsLink, isWingContest, topPerformers } = req.body;
     if (!title) {
       return res.status(400).json({ message: 'Title is required.' });
     }
     const contest = new Contest({
       title: title.trim(),
       description: description?.trim() || '',
-      cfContestId: cfContestId?.trim() || undefined,
-      startTime: startTime ? new Date(startTime) : undefined,
-      endTime: endTime ? new Date(endTime) : undefined,
-      difficulty: difficulty || 'Other',
+      contestLink: contestLink?.trim() || undefined,
+      standingsLink: standingsLink?.trim() || undefined,
       isWingContest: !!isWingContest,
       topPerformers: topPerformers || [],
       createdBy: req.user.id,
@@ -71,17 +69,15 @@ export const createContest = async (req, res) => {
 export const updateContest = async (req, res) => {
   try {
 
-    const { title, description, cfContestId, startTime, endTime, difficulty, isWingContest, topPerformers } = req.body;
+    const { title, description, contestLink, standingsLink, isWingContest, topPerformers } = req.body;
     const contest = await Contest.findByIdAndUpdate(
       req.params.id,
       {
         $set: {
           ...(title && { title: title.trim() }),
           ...(description !== undefined && { description: description.trim() }),
-          ...(cfContestId !== undefined && { cfContestId: cfContestId.trim() }),
-          ...(startTime && { startTime: new Date(startTime) }),
-          ...(endTime && { endTime: new Date(endTime) }),
-          ...(difficulty && { difficulty }),
+          ...(contestLink !== undefined && { contestLink: contestLink.trim() }),
+          ...(standingsLink !== undefined && { standingsLink: standingsLink.trim() }),
           ...(isWingContest !== undefined && { isWingContest }),
           ...(topPerformers !== undefined && { topPerformers }),
         },

@@ -24,6 +24,7 @@ export default function PostViewModal({ post, onClose, currentUser }) {
   const rank      = post.author?.rank || '';
   const rankColor = cfRankColor(rank);
   const isWing    = post.author?.isWingMember === true;
+  const isCoordinator = post.author?.isCoordinator === true;
 
   const [comments, setComments] = useState([]);
   const [page, setPage] = useState(1);
@@ -125,7 +126,11 @@ export default function PostViewModal({ post, onClose, currentUser }) {
               <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${cat.bg} ${cat.border} ${cat.color}`}>
                 {cat.emoji} {cat.label}
               </span>
-              {isWing && (
+              {isCoordinator ? (
+                <span className="badge-coordinator text-[10px] uppercase tracking-tighter">
+                  Coordinator
+                </span>
+              ) : isWing && (
                 <span className="badge-wing">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5v-2z"/>
@@ -186,7 +191,11 @@ export default function PostViewModal({ post, onClose, currentUser }) {
                 {post.author?.cfHandle && (
                   <span className="text-xs text-accent">@{post.author.cfHandle}</span>
                 )}
-                {rank && (
+                {post.author?.customTitle ? (
+                  <span className="text-[10px] font-bold text-slate-300 mt-0.5 tracking-wide px-1.5 py-0.5 border border-white/10 rounded">
+                    {post.author.customTitle}
+                  </span>
+                ) : rank && (
                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded capitalize"
                     style={{ color: rankColor, background: `${rankColor}18`, border: `1px solid ${rankColor}40` }}>
                     {rank.replace(/\b\w/g, c => c.toUpperCase())}

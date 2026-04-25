@@ -333,6 +333,23 @@ export default function EditorialsPage() {
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
   const [catFilter, setCatFilter]   = useState('all');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.isAuthenticated) setCurrentUser(d.user); })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      window.location.reload();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API_BASE}/api/editorials`, { credentials: 'include' })
@@ -390,6 +407,20 @@ export default function EditorialsPage() {
             <a href="/" className="text-sm text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:block">
               ← Hub
             </a>
+            {currentUser?.isAdmin && (
+              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors flex items-center gap-1.5 font-bold">
+                🛡️ Admin
+              </a>
+            )}
+            {currentUser && (
+              <button
+                onClick={handleLogout}
+                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-semibold"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+              </button>
+            )}
             <a href="/create-editorial"
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors"
               style={{ color:'#eab308', background:'rgba(234,179,8,0.08)', border:'1px solid rgba(234,179,8,0.2)' }}>

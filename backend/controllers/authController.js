@@ -66,7 +66,7 @@ export const loginUser = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    res.json({ message: 'Logged in successfully', user: { id: user._id, username: user.username, cfHandle: user.cfHandle } });
+    res.json({ message: 'Logged in successfully', user: { id: user._id, username: user.username, cfHandle: user.cfHandle, isAdmin: user.isAdmin, isCoordinator: user.isCoordinator, customTitle: user.customTitle } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -92,7 +92,7 @@ export const verifySession = async (req, res) => {
     if (!user) {
       return res.status(401).json({ isAuthenticated: false });
     }
-    res.json({ isAuthenticated: true, user });
+    res.json({ isAuthenticated: true, user: { id: user._id, username: user.username, cfHandle: user.cfHandle, isAdmin: user.isAdmin, isCoordinator: user.isCoordinator, customTitle: user.customTitle } });
   } catch (err) {
     return res.status(401).json({ isAuthenticated: false });
   }

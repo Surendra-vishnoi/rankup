@@ -8,7 +8,7 @@ import Contest from '../models/Contest.js';
 export const getTopRankers = async (req, res) => {
   try {
     const rankers = await User.find({ isVerified: true, rating: { $exists: true, $gt: 0 } })
-      .select('username cfHandle rank rating isWingMember')
+      .select('username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle')
       .sort({ rating: -1 })
       .limit(10);
     res.json({ rankers });
@@ -23,7 +23,7 @@ export const getTopRankers = async (req, res) => {
 export const getTopContributors = async (req, res) => {
   try {
     const contributors = await User.find({})
-      .select('username cfHandle rank rating isWingMember karma')
+      .select('username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle karma')
       .sort({ karma: -1 })
       .limit(10);
     res.json({ contributors });
@@ -49,7 +49,7 @@ export const searchUsers = async (req, res) => {
 };
 
 // POST /api/users/make-wing-member
-// Only 'Surendra_vishnoi' can do this.
+// Deprecated / kept for backward compatibility if needed, but updateUserRoles replaces this.
 export const makeWingMember = async (req, res) => {
   try {
     if (req.user.username !== 'Surendra_vishnoi') {
@@ -78,13 +78,59 @@ export const makeWingMember = async (req, res) => {
   }
 };
 
+// PUT /api/users/:username/roles
+// Admin only.
+export const updateUserRoles = async (req, res) => {
+  try {
+    // We expect the requesting user to be an Admin
+    const reqUser = await User.findById(req.user.id);
+    if (!reqUser || !reqUser.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can modify roles.' });
+    }
+
+    const { username } = req.params;
+    const { isAdmin, isWingMember, isCoordinator, customTitle } = req.body;
+
+    const targetUser = await User.findOne({ username: new RegExp(`^${username.trim()}$`, 'i') });
+    if (!targetUser) {
+      return res.status(404).json({ message: `User '${username}' not found.` });
+    }
+
+    if (isAdmin !== undefined) targetUser.isAdmin = isAdmin;
+    if (isWingMember !== undefined) targetUser.isWingMember = isWingMember;
+    if (isCoordinator !== undefined) targetUser.isCoordinator = isCoordinator;
+    if (customTitle !== undefined) targetUser.customTitle = customTitle.trim();
+
+    await targetUser.save();
+
+    res.json({ message: `Roles updated for ${targetUser.username}`, user: targetUser });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error updating roles' });
+  }
+};
+
+// GET /api/users
+// Admin only. Returns all users.
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({})
+      .select('username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle karma isVerified createdAt')
+      .sort({ createdAt: -1 });
+    res.json({ users });
+  } catch (err) {
+    console.error('getAllUsers error:', err);
+    res.status(500).json({ message: 'Server error fetching all users' });
+  }
+};
+
 // GET /api/users/:username
 // Public profile — returns user's public info
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findOne({
       username: new RegExp(`^${req.params.username.trim()}$`, 'i'),
-    }).select('username cfHandle rank rating karma isWingMember isVerified createdAt avatarUrl');
+    }).select('username cfHandle rank rating karma isWingMember isAdmin isCoordinator customTitle isVerified createdAt avatarUrl');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });

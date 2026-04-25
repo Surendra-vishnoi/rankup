@@ -16,6 +16,11 @@ const contestMessageSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  parentMessage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ContestMessage',
+    default: null,
+  },
 }, { timestamps: true });
 
 const ContestMessage = mongoose.model('ContestMessage', contestMessageSchema);

@@ -23,6 +23,19 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+  isCoordinator: {
+    type: Boolean,
+    default: false,
+  },
+  customTitle: {
+    type: String,
+    default: '',
+    trim: true,
+  },
   rating: {
     type: Number,
   },

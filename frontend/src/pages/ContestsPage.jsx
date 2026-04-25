@@ -1,22 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../apiConfig';
 
 const ADMIN = 'Surendra_vishnoi';
-const DIFFICULTIES = ['Div. 1', 'Div. 2', 'Div. 3', 'Div. 4', 'Educational', 'Global', 'Other'];
-const DIFF_COLOR = {
-  'Div. 1': 'text-red-400 bg-red-400/10 border-red-400/30',
-  'Div. 2': 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-  'Div. 3': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
-  'Div. 4': 'text-teal-400 bg-teal-400/10 border-teal-400/30',
-  'Educational': 'text-blue-400 bg-blue-400/10 border-blue-400/30',
-  'Global': 'text-purple-400 bg-purple-400/10 border-purple-400/30',
-  'Other': 'text-slate-400 bg-slate-400/10 border-slate-400/30',
-};
-
-function fmt(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
 
 function Skeleton({ className }) {
   return <div className={`animate-pulse bg-white/10 rounded ${className}`} />;
@@ -80,110 +65,58 @@ function ContestForm({ initial, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     title: initial?.title || '',
     description: initial?.description || '',
-    cfContestId: initial?.cfContestId || '',
-    startTime: initial?.startTime ? new Date(initial.startTime).toISOString().slice(0, 16) : '',
-    endTime: initial?.endTime ? new Date(initial.endTime).toISOString().slice(0, 16) : '',
-    difficulty: initial?.difficulty || 'Div. 2',
+    contestLink: initial?.contestLink || '',
+    standingsLink: initial?.standingsLink || '',
     isWingContest: initial?.isWingContest || false,
     topPerformers: initial?.topPerformers || [null, null, null],
   });
-  const [fetching, setFetching] = useState(false);
-
-  const autofillCF = async () => {
-    if (!form.cfContestId) return;
-    setFetching(true);
-    try {
-      const r = await fetch(`https://codeforces.com/api/contest.list`);
-      const d = await r.json();
-      const contest = d.result?.find(c => String(c.id) === String(form.cfContestId));
-      if (contest) {
-        const start = new Date(contest.startTimeSeconds * 1000);
-        const end = new Date((contest.startTimeSeconds + contest.durationSeconds) * 1000);
-        setForm(f => ({
-          ...f,
-          title: contest.name || f.title,
-          startTime: start.toISOString().slice(0, 16),
-          endTime: end.toISOString().slice(0, 16),
-        }));
-      }
-    } catch {}
-    setFetching(false);
-  };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-slate-100 mb-5">{initial ? 'Edit Contest' : 'Create Contest'}</h2>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onCancel()}>
+      <div className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+        <h2 className="text-xl font-bold text-slate-100 mb-6">{initial ? 'Edit Contest' : 'Create Contest'}</h2>
         <div className="flex flex-col gap-4">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-xs text-slate-500 mb-1 block">CF Contest ID</label>
-              <input className="input-field" placeholder="e.g. 2050" value={form.cfContestId} onChange={e => set('cfContestId', e.target.value)} />
-            </div>
-            <button onClick={autofillCF} disabled={fetching || !form.cfContestId} className="btn-ghost self-end px-3 py-2 text-xs whitespace-nowrap disabled:opacity-40">
-              {fetching ? '…' : 'Auto-fill ↗'}
-            </button>
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Title *</label>
+            <input className="input-field py-2.5" placeholder="e.g. Codeforces Round 999" value={form.title} onChange={e => set('title', e.target.value)} />
           </div>
 
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Title *</label>
-            <input className="input-field" placeholder="Codeforces Round 999" value={form.title} onChange={e => set('title', e.target.value)} />
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Description</label>
+            <textarea className="input-field resize-y min-h-[80px]" placeholder="Brief description…" value={form.description} onChange={e => set('description', e.target.value)} />
           </div>
 
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Description</label>
-            <textarea className="input-field resize-none" rows={2} placeholder="Brief description…" value={form.description} onChange={e => set('description', e.target.value)} />
-          </div>
-
-          <div>
-            <label className="text-xs text-slate-500 mb-1 block">Difficulty</label>
-            <select className="input-field" value={form.difficulty} onChange={e => set('difficulty', e.target.value)}>
-              {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">Start Time</label>
-              <input type="datetime-local" className="input-field" value={form.startTime} onChange={e => set('startTime', e.target.value)} />
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Contest Link</label>
+              <input className="input-field py-2.5" placeholder="https://..." value={form.contestLink} onChange={e => set('contestLink', e.target.value)} />
             </div>
+
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">End Time</label>
-              <input type="datetime-local" className="input-field" value={form.endTime} onChange={e => set('endTime', e.target.value)} />
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Standings Link</label>
+              <input className="input-field py-2.5" placeholder="https://..." value={form.standingsLink} onChange={e => set('standingsLink', e.target.value)} />
             </div>
           </div>
 
-          <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.isWingContest} onChange={e => set('isWingContest', e.target.checked)} className="w-4 h-4 accent-amber-500" />
-              <span className="text-sm font-semibold text-amber-500">🏆 CP Wing Contest</span>
+          <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] mt-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={form.isWingContest} onChange={e => set('isWingContest', e.target.checked)} className="w-5 h-5 accent-amber-500 rounded" />
+              <span className="text-sm font-bold text-amber-500">🏆 CP Wing Contest</span>
             </label>
             {form.isWingContest && (
-              <div className="mt-3 flex flex-col gap-2">
-                <p className="text-xs text-slate-400 mb-1">Select the top 3 performers from the platform to award medals.</p>
-                <UserSearchSelect 
-                  value={form.topPerformers[0]} 
-                  onChange={u => set('topPerformers', [u, form.topPerformers[1], form.topPerformers[2]])} 
-                  placeholder="🥇 1st Place Username" 
-                />
-                <UserSearchSelect 
-                  value={form.topPerformers[1]} 
-                  onChange={u => set('topPerformers', [form.topPerformers[0], u, form.topPerformers[2]])} 
-                  placeholder="🥈 2nd Place Username" 
-                />
-                <UserSearchSelect 
-                  value={form.topPerformers[2]} 
-                  onChange={u => set('topPerformers', [form.topPerformers[0], form.topPerformers[1], u])} 
-                  placeholder="🥉 3rd Place Username" 
-                />
+              <div className="mt-4 flex flex-col gap-3">
+                <p className="text-xs text-slate-400 mb-1">Select the top 3 performers to award medals.</p>
+                <UserSearchSelect value={form.topPerformers[0]} onChange={u => set('topPerformers', [u, form.topPerformers[1], form.topPerformers[2]])} placeholder="🥇 1st Place Username" />
+                <UserSearchSelect value={form.topPerformers[1]} onChange={u => set('topPerformers', [form.topPerformers[0], u, form.topPerformers[2]])} placeholder="🥈 2nd Place Username" />
+                <UserSearchSelect value={form.topPerformers[2]} onChange={u => set('topPerformers', [form.topPerformers[0], form.topPerformers[1], u])} placeholder="🥉 3rd Place Username" />
               </div>
             )}
           </div>
 
-          <div className="flex gap-2 mt-2">
-            <button onClick={onCancel} className="btn-ghost flex-1">Cancel</button>
+          <div className="flex gap-3 mt-4 pt-4 border-t border-white/5">
+            <button onClick={onCancel} className="btn-ghost flex-1 py-2.5 font-bold">Cancel</button>
             <button 
               onClick={() => {
                 const submitForm = { ...form };
@@ -195,9 +128,9 @@ function ContestForm({ initial, onSubmit, onCancel, loading }) {
                 onSubmit(submitForm);
               }} 
               disabled={loading || !form.title} 
-              className="btn-primary flex-1 disabled:opacity-50"
+              className="btn-primary flex-1 py-2.5 font-bold disabled:opacity-50"
             >
-              {loading ? 'Saving…' : (initial ? 'Save Changes' : 'Create')}
+              {loading ? 'Saving…' : (initial ? 'Save Changes' : 'Create Contest')}
             </button>
           </div>
         </div>
@@ -241,39 +174,39 @@ function LinkPostModal({ contestId, onClose, onLinked, currentUser }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="card p-5 w-full max-w-md max-h-[80vh] flex flex-col">
-        <h2 className="text-base font-bold text-slate-100 mb-3">Link a Post / Editorial</h2>
-        <input className="input-field mb-3" placeholder="Search posts…" value={search} onChange={e => setSearch(e.target.value)} />
-        <div className="overflow-y-auto flex flex-col gap-2 flex-1">
-          {loading ? <Skeleton className="h-10 w-full" /> : filtered.length === 0 ? (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="card p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+        <h2 className="text-lg font-bold text-slate-100 mb-4">Link a Post / Editorial</h2>
+        <input className="input-field mb-4 py-2.5" placeholder="Search by title…" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="overflow-y-auto flex flex-col gap-2 flex-1 custom-scrollbar pr-1">
+          {loading ? <Skeleton className="h-12 w-full" /> : filtered.length === 0 ? (
             <p className="text-slate-500 text-sm text-center py-6">No posts found.</p>
           ) : filtered.map(p => (
-            <div key={p._id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] hover:border-accent/30 transition-all">
+            <div key={p._id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] hover:border-accent/30 bg-bg-surface hover:bg-white/[0.04] transition-all">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-200 truncate">{p.title}</p>
-                <p className="text-xs text-slate-500">{p.isEditorial ? '⭐ Editorial' : `📝 ${p.category}`}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{p.isEditorial ? '⭐ Editorial' : `📝 ${p.category}`}</p>
               </div>
               <button
                 onClick={() => link(p._id)}
                 disabled={linking === p._id}
-                className="btn-primary text-xs px-3 py-1.5 flex-shrink-0 disabled:opacity-50"
+                className="btn-primary text-xs px-4 py-2 flex-shrink-0 disabled:opacity-50"
               >
                 {linking === p._id ? '…' : 'Link'}
               </button>
             </div>
           ))}
         </div>
-        <button onClick={onClose} className="btn-ghost mt-3 w-full">Close</button>
+        <button onClick={onClose} className="btn-ghost mt-4 w-full py-2.5 font-bold">Close</button>
       </div>
     </div>
   );
 }
 
-function ContestChat({ contestId, currentUser }) {
+function ContestDiscussion({ contestId, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const messagesEndRef = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const fetchMsgs = useCallback(() => {
     fetch(`${API_BASE}/api/contests/${contestId}/chat`)
@@ -283,7 +216,7 @@ function ContestChat({ contestId, currentUser }) {
 
   useEffect(() => {
     fetchMsgs();
-    const t = setInterval(fetchMsgs, 3000);
+    const t = setInterval(fetchMsgs, 5000);
     return () => clearInterval(t);
   }, [fetchMsgs]);
 
@@ -291,180 +224,216 @@ function ContestChat({ contestId, currentUser }) {
     e.preventDefault();
     if (!input.trim()) return;
     const txt = input;
+    const parent = replyingTo?._id;
     setInput('');
-    // Optimistic UI could be added here
+    setReplyingTo(null);
     await fetch(`${API_BASE}/api/contests/${contestId}/chat`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: txt })
+      body: JSON.stringify({ text: txt, parentMessage: parent || null })
     });
     fetchMsgs();
   };
 
+  const msgMap = {};
+  messages.forEach(m => msgMap[m._id] = { ...m, children: [] });
+  const rootMsgs = [];
+  messages.forEach(m => {
+    if (m.parentMessage && msgMap[m.parentMessage]) {
+      msgMap[m.parentMessage].children.push(msgMap[m._id]);
+    } else {
+      rootMsgs.push(msgMap[m._id]);
+    }
+  });
+
+  const renderMessage = (msg, depth = 0) => {
+    const isMe = currentUser?._id === msg.author?._id || currentUser?.username === msg.author?.username;
+    return (
+      <div key={msg._id} className={`flex flex-col gap-1.5 mt-4 ${depth > 0 ? 'ml-3 sm:ml-6 pl-3 sm:pl-4 border-l border-white/[0.08]' : ''}`}>
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+            {(msg.author?.username || '?')[0].toUpperCase()}
+          </div>
+          <span className={`text-xs font-bold ${isMe ? 'text-accent-light' : 'text-slate-300'}`}>{msg.author?.username}</span>
+          <span className="text-[10px] font-medium text-slate-500">{new Date(msg.createdAt).toLocaleDateString()}</span>
+        </div>
+        <div className="text-sm text-slate-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.04] leading-relaxed">
+          {msg.text}
+        </div>
+        <div className="flex items-center gap-3 mt-1 px-1">
+          <button onClick={() => setReplyingTo(msg)} className="text-[11px] font-bold text-slate-500 hover:text-slate-200 transition-colors uppercase tracking-wider flex items-center gap-1">
+             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+             Reply
+          </button>
+        </div>
+        {msg.children.map(child => renderMessage(child, depth + 1))}
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-col h-[400px]">
-      <div className="flex-1 overflow-y-auto flex flex-col gap-3 p-2 bg-black/20 rounded-xl border border-white/5 mb-3">
-        {messages.length === 0 ? (
-          <div className="m-auto text-slate-500 text-sm">No messages yet. Say hi!</div>
+    <div className="flex flex-col h-[500px]">
+      <div className="flex-1 overflow-y-auto flex flex-col p-4 bg-bg-surface rounded-xl border border-white/[0.05] mb-4 custom-scrollbar">
+        {rootMsgs.length === 0 ? (
+          <div className="m-auto text-center">
+            <div className="text-3xl mb-2">💬</div>
+            <div className="text-slate-500 text-sm font-semibold">No discussions yet. Start one!</div>
+          </div>
         ) : (
-          messages.map(m => {
-            const isMe = currentUser?._id === m.author?._id || currentUser?.username === m.author?.username;
-            return (
-              <div key={m._id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                <span className="text-[10px] text-slate-500 mb-0.5 px-1">{m.author?.username}</span>
-                <div className={`px-3 py-2 rounded-2xl text-sm ${isMe ? 'bg-accent text-white rounded-br-sm' : 'bg-bg-surface border border-white/10 text-slate-200 rounded-bl-sm'}`}>
-                  {m.text}
-                </div>
-              </div>
-            );
-          })
+          rootMsgs.map(m => renderMessage(m, 0))
         )}
       </div>
       {currentUser ? (
-        <form onSubmit={send} className="flex gap-2">
-          <input className="input-field py-2" placeholder="Send a message…" value={input} onChange={e => setInput(e.target.value)} />
-          <button type="submit" disabled={!input.trim()} className="btn-primary px-4">Send</button>
+        <form onSubmit={send} className="flex flex-col gap-2">
+          {replyingTo && (
+            <div className="flex items-center justify-between bg-accent/10 text-accent px-4 py-2 rounded-xl text-xs font-bold border border-accent/20 animate-fade-in">
+              <span>Replying to @{replyingTo.author?.username}</span>
+              <button type="button" onClick={() => setReplyingTo(null)} className="hover:text-white p-1">✕</button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input className="input-field py-3 px-4 shadow-inner-dark" placeholder="Share your thoughts…" value={input} onChange={e => setInput(e.target.value)} />
+            <button type="submit" disabled={!input.trim()} className="btn-primary px-6 shadow-btn font-bold">Post</button>
+          </div>
         </form>
       ) : (
-        <div className="text-center text-sm text-slate-500 p-2 bg-white/5 rounded-xl border border-white/5">
-          Please log in to chat.
+        <div className="text-center text-sm font-semibold text-slate-500 p-4 bg-white/[0.02] rounded-xl border border-white/[0.05]">
+          Please log in to participate in the discussion.
         </div>
       )}
     </div>
   );
 }
 
-function ContestDetail({ contest, currentUser, isAdmin, onUnlink, onLinkPost }) {
+function ContestDetailModal({ contest, currentUser, isAdmin, onClose, onUnlink, onLinkPost, onEdit, onDelete }) {
   const [tab, setTab] = useState('posts');
   const items = tab === 'posts' ? (contest.linkedPosts || []) : (contest.linkedEditorials || []);
 
   return (
-    <div className="card p-5 h-full overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFF_COLOR[contest.difficulty] || DIFF_COLOR['Other']}`}>
-              {contest.difficulty}
-            </span>
-            {contest.cfContestId && (
-              <div className="flex items-center gap-3">
-                <a
-                  href={`https://codeforces.com/contest/${contest.cfContestId}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="text-xs font-mono text-accent hover:underline"
-                >
-                  CF #{contest.cfContestId} ↗
-                </a>
-                <a
-                  href={`https://codeforces.com/contest/${contest.cfContestId}/standings`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="text-xs font-mono text-emerald-400 hover:underline"
-                >
-                  Standings ↗
-                </a>
-              </div>
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto pt-10 pb-10" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="card w-full max-w-3xl flex flex-col bg-bg-deep border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative my-auto animate-fade-up max-h-[90vh]">
+        
+        {/* Header section with sticky top */}
+        <div className="sticky top-0 z-10 bg-bg-deep/95 backdrop-blur-md border-b border-white/[0.06] p-6 rounded-t-2xl">
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight tracking-tight mb-2">{contest.title}</h2>
+              {contest.description && <p className="text-sm text-slate-400 font-medium">{contest.description}</p>}
+            </div>
+            <button onClick={onClose} className="p-2 -mr-2 -mt-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-3 mt-5">
+            {contest.contestLink && (
+              <a href={contest.contestLink} target="_blank" rel="noopener noreferrer" className="btn-primary text-xs py-2 px-5 shadow-btn font-bold">
+                Contest Link ↗
+              </a>
+            )}
+            {contest.standingsLink && (
+              <a href={contest.standingsLink} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs py-2 px-5 border border-white/10 hover:border-white/20 hover:bg-white/5 font-bold">
+                Standings ↗
+              </a>
+            )}
+            {isAdmin && (
+               <div className="ml-auto flex gap-2">
+                 <button onClick={() => onEdit(contest)} className="text-xs text-slate-400 hover:text-accent font-bold px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">Edit</button>
+                 <button onClick={() => { if(window.confirm('Delete this contest?')) { onDelete(contest._id); onClose(); } }} className="text-xs text-slate-400 hover:text-red-400 font-bold px-3 py-1.5 rounded-lg hover:bg-red-400/10 transition-colors">Delete</button>
+               </div>
             )}
           </div>
-          <h2 className="text-lg font-bold text-slate-100 leading-snug">{contest.title}</h2>
-          {contest.description && <p className="text-sm text-slate-400 mt-1">{contest.description}</p>}
         </div>
-      </div>
 
-      {/* Time info */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="bg-bg-surface rounded-xl p-3 border border-white/[0.06]">
-          <p className="text-[10px] uppercase tracking-wider text-slate-600 mb-1">Start</p>
-          <p className="text-xs font-semibold text-slate-300">{fmt(contest.startTime)}</p>
-        </div>
-        <div className="bg-bg-surface rounded-xl p-3 border border-white/[0.06]">
-          <p className="text-[10px] uppercase tracking-wider text-slate-600 mb-1">End</p>
-          <p className="text-xs font-semibold text-slate-300">{fmt(contest.endTime)}</p>
-        </div>
-      </div>
-
-      {/* Top Performers Section */}
-      {contest.isWingContest && contest.topPerformers?.length > 0 && (
-        <div className="mb-4 bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 rounded-xl p-4">
-          <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            🏆 Top Performers
-          </h3>
-          <div className="flex flex-col gap-2">
-            {contest.topPerformers.map((u, idx) => {
-              if (!u) return null;
-              const medals = ['🥇', '🥈', '🥉'];
-              const colors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
-              return (
-                <div key={u._id || idx} className="flex items-center gap-3 bg-black/20 p-2 rounded-lg border border-white/5">
-                  <span className={`text-lg ${colors[idx]}`}>{medals[idx]}</span>
-                  <div className="flex items-center gap-2">
-                    {u.avatarUrl ? (
-                      <img src={u.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white">
-                        {(u.username || '?')[0].toUpperCase()}
+        {/* Scrollable content area */}
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          {/* Top Performers Section */}
+          {contest.isWingContest && contest.topPerformers?.length > 0 && (
+            <div className="mb-8 bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-5 shadow-gold">
+              <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="text-base">🏆</span> Top Performers
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {contest.topPerformers.map((u, idx) => {
+                  if (!u) return null;
+                  const medals = ['🥇', '🥈', '🥉'];
+                  const colors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+                  return (
+                    <div key={u._id || idx} className="flex items-center gap-3 bg-black/30 p-3 rounded-xl border border-white/5 shadow-inner-dark">
+                      <span className={`text-2xl drop-shadow-md ${colors[idx]}`}>{medals[idx]}</span>
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover shadow-md" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                            {(u.username || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <a href={`/profile/${u.username}`} className="text-sm font-bold text-slate-200 hover:text-accent transition-colors truncate">
+                          {u.username}
+                        </a>
                       </div>
-                    )}
-                    <a href={`/profile/${u.username}`} className="text-sm font-semibold text-slate-200 hover:text-accent transition-colors">
-                      {u.username}
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Link posts button (all auth users) */}
-      {currentUser && (
-        <button
-          onClick={onLinkPost}
-          className="btn-ghost w-full flex items-center justify-center gap-2 mb-4 text-sm"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          Link a Post / Editorial
-        </button>
-      )}
-
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-bg-surface rounded-xl border border-white/[0.07] mb-4 overflow-x-auto">
-        {[
-          ['posts', '📝 Posts', contest.linkedPosts?.length], 
-          ['editorials', '⭐ Editorials', contest.linkedEditorials?.length],
-          ['chat', '💬 Chat', null]
-        ].map(([k, label, cnt]) => (
-          <button key={k} onClick={() => setTab(k)} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${tab === k ? 'bg-accent text-white shadow-btn' : 'text-slate-400 hover:text-slate-200'}`}>
-            {label} {cnt !== null && <span className={`text-[10px] px-1 rounded-full ${tab === k ? 'bg-white/20' : 'bg-white/10 text-slate-500'}`}>{cnt ?? 0}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* Item list */}
-      {tab === 'chat' ? (
-        <ContestChat contestId={contest._id} currentUser={currentUser} />
-      ) : items.length === 0 ? (
-        <div className="py-8 text-center text-slate-600 text-sm">No {tab} linked yet.</div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {items.map(p => (
-            <div key={p._id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] hover:border-white/10 transition-all group">
-              <div className="flex-1 min-w-0">
-                <a href={p.isEditorial ? `/editorials?id=${p._id}` : `/?post=${p._id}`} className="text-sm font-semibold text-slate-200 hover:text-accent transition-colors line-clamp-1 block">
-                  {p.title}
-                </a>
-                <p className="text-xs text-slate-500">by {p.author?.username}</p>
+                    </div>
+                  );
+                })}
               </div>
-              {isAdmin && (
-                <button onClick={() => onUnlink(p._id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all p-1" title="Unlink">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              )}
             </div>
-          ))}
+          )}
+
+          {/* Link posts button (all auth users) */}
+          {currentUser && (
+            <button
+              onClick={onLinkPost}
+              className="w-full flex items-center justify-center gap-2 mb-6 py-3.5 rounded-xl border border-dashed border-white/20 text-slate-400 hover:text-white hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-bold"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Link a Post or Editorial
+            </button>
+          )}
+
+          {/* Tabs */}
+          <div className="flex gap-4 border-b border-white/10 mb-6 px-1">
+            {[
+              ['posts', '📝 Posts', contest.linkedPosts?.length], 
+              ['editorials', '⭐ Editorials', contest.linkedEditorials?.length],
+              ['discussion', '💬 Discussion', null]
+            ].map(([k, label, cnt]) => (
+              <button key={k} onClick={() => setTab(k)} className={`pb-3 text-sm font-bold transition-all whitespace-nowrap border-b-2 tracking-wide ${tab === k ? 'border-accent text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+                {label} {cnt !== null && <span className={`text-[10px] ml-1.5 px-2 py-0.5 rounded-full ${tab === k ? 'bg-accent/20 text-accent' : 'bg-white/10 text-slate-500'}`}>{cnt ?? 0}</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Item list */}
+          {tab === 'discussion' ? (
+            <ContestDiscussion contestId={contest._id} currentUser={currentUser} />
+          ) : items.length === 0 ? (
+            <div className="py-16 text-center text-slate-500 text-sm font-semibold bg-bg-surface rounded-2xl border border-white/[0.05]">
+              <div className="text-3xl mb-3 opacity-50">📂</div>
+              No {tab} linked yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {items.map(p => (
+                <div key={p._id} className="flex flex-col p-5 rounded-2xl border border-white/[0.06] hover:border-accent/30 bg-bg-surface hover:bg-white/[0.04] transition-all duration-300 group relative">
+                  <a href={p.isEditorial ? `/editorials?id=${p._id}` : `/?post=${p._id}`} className="text-sm font-bold text-slate-200 group-hover:text-accent transition-colors line-clamp-2 mb-3 pr-8 leading-snug">
+                    {p.title}
+                  </a>
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-bg-deep border border-white/5 px-2.5 py-1 rounded-md">by {p.author?.username}</span>
+                  </div>
+                  {isAdmin && (
+                    <button onClick={() => onUnlink(p._id)} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-red-400 hover:text-white hover:bg-red-500 transition-all p-1.5 rounded-lg bg-red-400/10" title="Unlink">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -488,6 +457,15 @@ export default function ContestsPage() {
       .then(d => { if (d?.isAuthenticated) setCurrentUser(d.user); })
       .catch(() => {});
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      window.location.reload();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   const fetchContests = () => {
     setLoading(true);
@@ -528,7 +506,6 @@ export default function ContestsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this contest?')) return;
     await fetch(`${API_BASE}/api/contests/${id}`, { method: 'DELETE', credentials: 'include' });
     if (selected?._id === id) setSelected(null);
     fetchContests();
@@ -550,131 +527,121 @@ export default function ContestsPage() {
   };
 
   const ContestCard = ({ c }) => {
-    const isSelected = selected?._id === c._id;
-    const now = Date.now();
-    const start = c.startTime ? new Date(c.startTime).getTime() : null;
-    const end = c.endTime ? new Date(c.endTime).getTime() : null;
-    const status = !start ? 'tbd' : now < start ? 'upcoming' : end && now < end ? 'live' : 'ended';
-    const statusStyle = { live: 'text-emerald-400', upcoming: 'text-blue-400', ended: 'text-slate-500', tbd: 'text-slate-600' };
-
     return (
       <div
         onClick={() => loadDetail(c)}
-        className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5
-          ${isSelected ? 'border-accent/50 bg-accent/5 shadow-btn' : 'border-white/[0.07] hover:border-accent/30 bg-bg-card'}`}
+        className="p-6 rounded-2xl border border-white/[0.07] hover:border-accent/40 bg-bg-card hover:bg-bg-card2 transition-all duration-300 hover:-translate-y-1 hover:shadow-btn cursor-pointer flex flex-col h-full relative overflow-hidden group"
       >
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${DIFF_COLOR[c.difficulty] || DIFF_COLOR['Other']}`}>
-            {c.difficulty}
-          </span>
-          <span className={`text-[10px] font-bold uppercase tracking-wider ${statusStyle[status]}`}>
-            {status === 'live' && '● '}{status}
-          </span>
-          <span className="text-[10px] text-slate-600 ml-auto">
-            {(c.linkedPosts?.length || 0) + (c.linkedEditorials?.length || 0)} linked
-          </span>
-        </div>
-        <h3 className="text-sm font-bold text-slate-100 leading-snug line-clamp-2">{c.title}</h3>
-        {c.startTime && <p className="text-[11px] text-slate-500 mt-1.5">{fmt(c.startTime)}</p>}
-
-        {isAdmin && (
-          <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
-            <button onClick={() => { setEditTarget(c); setShowForm(true); }} className="text-xs text-slate-400 hover:text-accent transition-colors px-2 py-1 rounded hover:bg-accent/10">Edit</button>
-            <button onClick={() => handleDelete(c._id)} className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-400/10">Delete</button>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/10 transition-colors pointer-events-none" />
+        <h3 className="text-xl font-extrabold text-slate-100 leading-snug line-clamp-2 mb-3 relative z-10 group-hover:text-white tracking-tight">{c.title}</h3>
+        {c.description && <p className="text-sm text-slate-400 font-medium line-clamp-2 mb-6 relative z-10 leading-relaxed">{c.description}</p>}
+        
+        <div className="mt-auto flex items-center justify-between border-t border-white/5 pt-4 relative z-10">
+          <div className="flex gap-3">
+             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-md border border-white/[0.05]">
+               {(c.linkedPosts?.length || 0) + (c.linkedEditorials?.length || 0)} Posts
+             </span>
+             {c.isWingContest && (
+               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md">
+                 🏆 Wing
+               </span>
+             )}
           </div>
-        )}
+          <svg className="w-5 h-5 text-slate-600 group-hover:text-accent transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-bg-deep">
+    <div className="min-h-screen bg-bg-deep flex flex-col">
       <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 50% at 20% 0%, rgba(99,120,255,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(167,139,250,0.08) 0%, transparent 60%)' }} />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 50% at 20% 0%, rgba(99,120,255,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(167,139,250,0.05) 0%, transparent 60%)' }} />
       </div>
 
       {/* Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
-          <a href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
-            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
+      <header className="sticky top-0 z-30 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-5">
+          <a href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn group-hover:scale-105 transition-transform">R</div>
+            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
           </a>
-          <div className="flex items-center gap-1 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
             <a href="/" className="hover:text-slate-200 transition-colors">Hub</a>
-            <span>/</span>
-            <span className="text-slate-300">Contests</span>
+            <span className="opacity-50">/</span>
+            <span className="text-slate-200">Contests</span>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-
-            {!currentUser && <a href="/auth" className="btn-primary text-sm px-4 py-2">Login</a>}
+          <div className="ml-auto flex items-center gap-3">
+            {!currentUser && <a href="/auth" className="btn-primary text-sm px-5 py-2 font-bold shadow-btn">Login</a>}
+            {currentUser?.isAdmin && (
+              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 border border-transparent hover:border-purple-500/20 transition-all flex items-center gap-1.5 font-bold">
+                🛡️ Admin
+              </a>
+            )}
             {currentUser && (
-              <a href={`/profile/${currentUser.username}`} className="text-sm text-slate-400 hover:text-slate-200 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+              <a href={`/profile/${currentUser.username}`} className="text-sm font-bold text-slate-400 hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
                 {currentUser.username}
               </a>
+            )}
+            {currentUser && (
+              <button
+                onClick={handleLogout}
+                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-bold"
+              >
+                Logout
+              </button>
             )}
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
-        {/* Page title + admin create */}
-        <div className="flex items-center justify-between mb-6">
+      <main className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-6 py-10">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-100">🏆 Contests Hub</h1>
-            <p className="text-slate-500 text-sm mt-1">Admin-organized Codeforces contests. Link your posts and editorials.</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight mb-2 flex items-center gap-3">
+              🏆 Contests Hub
+            </h1>
+            <p className="text-slate-400 text-sm sm:text-base font-medium max-w-xl leading-relaxed">
+              Explore officially managed contests, discover top performers, and engage in detailed discussions.
+            </p>
           </div>
           {isAdmin && (
-            <button onClick={() => { setEditTarget(null); setShowForm(true); }} className="btn-primary flex items-center gap-2 text-sm">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <button onClick={() => { setEditTarget(null); setShowForm(true); }} className="btn-primary flex items-center justify-center gap-2 text-sm px-6 py-3 shadow-btn font-bold rounded-xl whitespace-nowrap">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Contest
             </button>
           )}
         </div>
 
-        <div className="flex gap-6" style={{ minHeight: '60vh' }}>
-          {/* Contest list */}
-          <div className="w-80 flex-shrink-0 flex flex-col gap-3">
-            {loading ? (
-              [1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
-            ) : contests.length === 0 ? (
-              <div className="card p-8 text-center">
-                <div className="text-4xl mb-3">🏆</div>
-                <p className="text-slate-500 text-sm">{isAdmin ? 'No contests yet. Create one!' : 'No contests yet.'}</p>
-              </div>
-            ) : (
-              contests.map(c => <ContestCard key={c._id} c={c} />)
-            )}
-          </div>
-
-          {/* Detail panel */}
-          <div className="flex-1 min-w-0">
-            {!selected ? (
-              <div className="card p-12 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-5xl mb-4">👈</div>
-                  <p className="text-slate-400 font-semibold">Select a contest</p>
-                  <p className="text-slate-600 text-sm mt-1">Click any contest to view details and linked posts.</p>
-                </div>
-              </div>
-            ) : detailLoading ? (
-              <div className="card p-6">
-                <Skeleton className="h-6 w-48 mb-3" />
-                <Skeleton className="h-4 w-32 mb-5" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : (
-              <ContestDetail
-                contest={selected}
-                currentUser={currentUser}
-                isAdmin={isAdmin}
-                onUnlink={handleUnlink}
-                onLinkPost={() => setShowLinkModal(true)}
-              />
-            )}
-          </div>
+        {/* Full-width Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            [1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)
+          ) : contests.length === 0 ? (
+            <div className="col-span-full card p-16 text-center border-dashed border-white/20 bg-transparent shadow-none">
+              <div className="text-5xl mb-4 opacity-50">🏆</div>
+              <p className="text-slate-400 text-lg font-semibold">{isAdmin ? 'No contests have been added yet. Create the first one!' : 'No contests available at the moment.'}</p>
+            </div>
+          ) : (
+            contests.map(c => <ContestCard key={c._id} c={c} />)
+          )}
         </div>
       </main>
+
+      {/* Modals */}
+      {selected && (
+        <ContestDetailModal
+          contest={selected}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          onClose={() => setSelected(null)}
+          onUnlink={handleUnlink}
+          onLinkPost={() => setShowLinkModal(true)}
+          onEdit={(c) => { setEditTarget(c); setShowForm(true); }}
+          onDelete={handleDelete}
+        />
+      )}
 
       {showForm && (
         <ContestForm

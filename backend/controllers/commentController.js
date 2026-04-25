@@ -11,7 +11,7 @@ export const getComments = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const comments = await Comment.find({ post: postId })
-      .populate('author', 'username cfHandle rank rating isWingMember')
+      .populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -58,7 +58,7 @@ export const addComment = async (req, res) => {
     await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 1 } });
 
     // Return with populated author so UI updates immediately
-    await newComment.populate('author', 'username cfHandle rank rating isWingMember');
+    await newComment.populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle');
 
     res.status(201).json({ comment: newComment });
   } catch (err) {

@@ -129,6 +129,16 @@
     box-shadow: 0 0 8px rgba(234,179,8,0.18);
   }
 
+  /* ── Coordinator badge ── */
+  .badge-coordinator {
+    @apply inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full;
+    color: #f43f5e; /* Rose 500 */
+    background: linear-gradient(135deg, rgba(244,63,94,0.15), rgba(159,18,57,0.15));
+    border: 1px solid rgba(244,63,94,0.4);
+    box-shadow: 0 0 8px rgba(244,63,94,0.25);
+    text-shadow: 0 0 10px rgba(244,63,94,0.5);
+  }
+
   /* ── Skeleton shimmer ── */
   .skeleton {
     @apply bg-white/[0.06] rounded animate-pulse;

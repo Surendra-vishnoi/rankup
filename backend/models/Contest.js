@@ -11,21 +11,13 @@ const contestSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
-  // CF round/contest ID, e.g. "1234"
-  cfContestId: {
+  contestLink: {
     type: String,
     trim: true,
   },
-  startTime: {
-    type: Date,
-  },
-  endTime: {
-    type: Date,
-  },
-  difficulty: {
+  standingsLink: {
     type: String,
-    enum: ['Div. 1', 'Div. 2', 'Div. 3', 'Div. 4', 'Educational', 'Global', 'Other'],
-    default: 'Other',
+    trim: true,
   },
   // Community posts linked to this contest
   linkedPosts: [
