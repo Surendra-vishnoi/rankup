@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE } from '../apiConfig';
+import GlobalSearch from '../components/GlobalSearch';
 
 export default function AdminPage() {
   const [username, setUsername] = useState('');
@@ -112,7 +113,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen pt-24 px-6 max-w-4xl mx-auto flex flex-col items-center pb-20">
       <div className="card w-full p-8 border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-amber-500/5 shadow-[0_0_40px_rgba(234,179,8,0.1)]">
-        <div className="flex flex-col items-center text-center mb-8">
+        <div className="flex flex-col items-center text-center mb-8 relative">
+          <div className="absolute top-0 right-0 hidden md:block">
+            <GlobalSearch />
+          </div>
           <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mb-4 border border-yellow-500/50 text-3xl shadow-gold">
             👑
           </div>

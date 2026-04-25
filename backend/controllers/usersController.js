@@ -151,7 +151,20 @@ export const getUserProfile = async (req, res) => {
       else if (c.topPerformers[2]?.toString() === user._id.toString()) bronze++;
     });
 
-    res.json({ user, stats: { postCount, editorialCount, commentCount, medals: { gold, silver, bronze } } });
+    const isFollowing = req.user ? user.followers.includes(req.user.id) : false;
+
+    res.json({ 
+      user, 
+      stats: { 
+        postCount, 
+        editorialCount, 
+        commentCount, 
+        medals: { gold, silver, bronze },
+        followersCount: user.followers?.length || 0,
+        followingCount: user.following?.length || 0,
+        isFollowing
+      } 
+    });
   } catch (err) {
     console.error('getUserProfile error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -216,5 +229,46 @@ export const updateUserProfile = async (req, res) => {
   } catch (err) {
     console.error('updateUserProfile error:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// POST /api/users/:username/follow
+export const followUser = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const targetUser = await User.findOne({ username: new RegExp(`^${req.params.username.trim()}$`, 'i') });
+    
+    if (!targetUser) return res.status(404).json({ message: 'User not found.' });
+    if (targetUser._id.toString() === currentUserId) return res.status(400).json({ message: 'You cannot follow yourself.' });
+
+    // Add to current user's following list
+    await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetUser._id } });
+    // Add to target user's followers list
+    await User.findByIdAndUpdate(targetUser._id, { $addToSet: { followers: currentUserId } });
+
+    res.json({ message: `You are now following ${targetUser.username}` });
+  } catch (err) {
+    console.error('followUser error:', err);
+    res.status(500).json({ message: 'Server error following user' });
+  }
+};
+
+// POST /api/users/:username/unfollow
+export const unfollowUser = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const targetUser = await User.findOne({ username: new RegExp(`^${req.params.username.trim()}$`, 'i') });
+    
+    if (!targetUser) return res.status(404).json({ message: 'User not found.' });
+
+    // Remove from current user's following list
+    await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUser._id } });
+    // Remove from target user's followers list
+    await User.findByIdAndUpdate(targetUser._id, { $pull: { followers: currentUserId } });
+
+    res.json({ message: `You unfollowed ${targetUser.username}` });
+  } catch (err) {
+    console.error('unfollowUser error:', err);
+    res.status(500).json({ message: 'Server error unfollowing user' });
   }
 };

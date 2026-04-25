@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE } from '../apiConfig';
 import { cfRankColor } from '../utils/cfRank.js';
+import GlobalSearch from '../components/GlobalSearch';
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
@@ -152,6 +153,7 @@ export default function ProfilePage() {
             <span>/</span>
             <span className="text-slate-300">Profile</span>
           </div>
+          <GlobalSearch />
           <div className="ml-auto flex items-center gap-2">
 
             <a href="/contests" className="text-slate-400 hover:text-slate-200 text-sm px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5">
@@ -299,8 +301,8 @@ export default function ProfilePage() {
               </div>
 
               {/* Actions */}
-              {isOwn && (
-                <div className="mt-4 sm:mt-0 sm:ml-auto">
+              <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:items-end gap-2">
+                {isOwn ? (
                   <button 
                     onClick={handleLogout}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:border-red-400/40 transition-colors shadow-sm"
@@ -310,19 +312,52 @@ export default function ProfilePage() {
                     </svg>
                     Logout
                   </button>
-                </div>
-              )}
+                ) : currentUser ? (
+                  <button
+                    onClick={async () => {
+                      const action = stats?.isFollowing ? 'unfollow' : 'follow';
+                      try {
+                        const r = await fetch(`${API_BASE}/api/users/${user.username}/${action}`, {
+                          method: 'POST',
+                          credentials: 'include'
+                        });
+                        if (r.ok) {
+                          setProfile(prev => ({
+                            ...prev,
+                            stats: {
+                              ...prev.stats,
+                              isFollowing: !prev.stats.isFollowing,
+                              followersCount: prev.stats.followersCount + (action === 'follow' ? 1 : -1)
+                            }
+                          }));
+                        }
+                      } catch (err) {
+                        console.error('Follow action failed', err);
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-1.5 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-btn ${
+                      stats?.isFollowing 
+                      ? 'bg-bg-surface border border-white/10 text-slate-300 hover:bg-white/5 hover:border-white/20' 
+                      : 'bg-gradient-to-r from-accent to-accent-violet text-white hover:scale-[1.02]'
+                    }`}
+                  >
+                    {stats?.isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
 
         {/* Stats Grid */}
         {!loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
             <StatCard icon="⚡" label="CF Rating" value={cfStats.rating ?? user?.rating} color={`font-mono`} />
             <StatCard icon="✅" label="Solved" value={cfStats.solved} color="text-emerald-400" />
+            <StatCard icon="👥" label="Followers" value={stats?.followersCount ?? 0} />
+            <StatCard icon="👤" label="Following" value={stats?.followingCount ?? 0} />
             <StatCard icon="💚" label="Karma" value={user?.karma != null ? `+${user.karma}` : '0'} color="text-emerald-400" />
-            <StatCard icon="📝" label="Total Posts" value={(stats?.postCount ?? 0) + (stats?.editorialCount ?? 0)} />
+            <StatCard icon="📝" label="Posts" value={(stats?.postCount ?? 0) + (stats?.editorialCount ?? 0)} />
             <div className="bg-bg-surface rounded-xl p-3 text-center border border-white/[0.05] hover:border-white/10 transition-colors flex flex-col items-center justify-center">
               <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Medals</p>
               <div className="flex items-center gap-2 text-sm font-semibold">

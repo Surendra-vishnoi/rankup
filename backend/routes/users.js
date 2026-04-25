@@ -9,6 +9,8 @@ import {
   searchUsers,
   updateUserRoles,
   getAllUsers,
+  followUser,
+  unfollowUser,
 } from '../controllers/usersController.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -30,5 +32,7 @@ router.put('/users/:username/roles', requireAuth, updateUserRoles);
 
 // Authenticated user
 router.put('/users/profile', requireAuth, updateUserProfile);
+router.post('/users/:username/follow', requireAuth, followUser);
+router.post('/users/:username/unfollow', requireAuth, unfollowUser);
 
 export default router;

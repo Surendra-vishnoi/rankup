@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../apiConfig';
+import GlobalSearch from '../components/GlobalSearch';
 
 const ADMIN = 'Surendra_vishnoi';
 
@@ -571,6 +572,7 @@ export default function ContestsPage() {
             <span className="opacity-50">/</span>
             <span className="text-slate-200">Contests</span>
           </div>
+          <GlobalSearch />
           <div className="ml-auto flex items-center gap-3">
             {!currentUser && <a href="/auth" className="btn-primary text-sm px-5 py-2 font-bold shadow-btn">Login</a>}
             {currentUser?.isAdmin && (
