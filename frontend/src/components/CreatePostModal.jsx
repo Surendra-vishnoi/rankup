@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { API_BASE } from '../apiConfig';
+import MentionsTextarea from './MentionsTextarea';
 
 const CATEGORIES = [
   { value: 'Insight',   label: 'Insight',   emoji: '💡', desc: 'Share an insight, trick, or discovery' },
@@ -7,7 +8,12 @@ const CATEGORIES = [
   { value: 'General',   label: 'General',   emoji: '☕', desc: 'General discussion or off-topic'      },
 ];
 
-export default function CreatePostModal({ onClose, onCreated }) {
+export default function CreatePostModal({ onClose, onCreated, currentUser }) {
+  const isTitledUser = currentUser && (currentUser.isWingMember || currentUser.isCoordinator || currentUser.isAdmin);
+  const categories = isTitledUser 
+    ? [...CATEGORIES, { value: 'Announcement', label: 'Announce', emoji: '📢', desc: 'Official announcement' }] 
+    : CATEGORIES;
+
   const [form, setForm] = useState({ title: '', content: '', category: '', cfProblemId: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
@@ -72,15 +78,15 @@ export default function CreatePostModal({ onClose, onCreated }) {
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Category
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {CATEGORIES.map(cat => (
+            <div className={`grid gap-2 ${categories.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+              {categories.map(cat => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => set('category', cat.value)}
                   className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-center transition-all duration-150
                     ${form.category === cat.value
-                      ? 'border-accent bg-accent/10 text-accent'
+                      ? (cat.value === 'Announcement' ? 'border-purple-500 bg-purple-500/10 text-purple-400' : 'border-accent bg-accent/10 text-accent')
                       : 'border-white/10 bg-bg-surface text-slate-400 hover:border-white/20 hover:text-slate-200'
                     }`}
                 >
@@ -133,12 +139,12 @@ export default function CreatePostModal({ onClose, onCreated }) {
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5" htmlFor="post-content">
               Content <span className="text-slate-600 normal-case">(Markdown supported)</span>
             </label>
-            <textarea
+            <MentionsTextarea
               id="post-content"
               className="input-field resize-none h-32"
               placeholder="Explain your idea, problem, or question…"
               value={form.content}
-              onChange={e => set('content', e.target.value)}
+              onChange={val => set('content', val)}
             />
           </div>
 

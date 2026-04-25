@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import MarkdownRenderer from './MarkdownRenderer.jsx';
 import { cfRankColor } from '../utils/cfRank.js';
 import { API_BASE } from '../apiConfig';
+import MentionsTextarea from './MentionsTextarea';
 
 const CATEGORY_META = {
   Insight:   { label: 'Insight',   emoji: '💡', color: 'text-yellow-400',  border: 'border-yellow-500/40', bg: 'bg-yellow-400/10' },
@@ -228,9 +229,9 @@ export default function PostViewModal({ post, onClose, currentUser }) {
               {currentUser ? (
                 <div className="flex gap-3">
                   <div className="relative w-full">
-                    <textarea 
+                    <MentionsTextarea 
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      onChange={setNewComment}
                       placeholder="Add to the discussion..."
                       className="input-field w-full min-h-[60px] resize-y placeholder:text-slate-600 bg-bg-surface border-white/10 text-sm py-3 px-4 pr-16"
                     />

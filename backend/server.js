@@ -12,6 +12,7 @@ import { startCfSyncJob } from './jobs/syncCfRatings.js';
 import editorialRoutes from './routes/editorials.js';
 import commentRoutes from './routes/comments.js';
 import contestRoutes from './routes/contests.js';
+import notificationRoutes from './routes/notifications.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -51,6 +52,7 @@ app.use('/api', usersRoutes);
 app.use('/api', editorialRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', contestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // --- SERVING FRONTEND FOR PRODUCTION ---
 if (process.env.NODE_ENV === 'production') {

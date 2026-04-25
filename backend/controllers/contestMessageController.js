@@ -1,5 +1,8 @@
 import ContestMessage from '../models/ContestMessage.js';
 import Contest from '../models/Contest.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import { extractUsernames, getUserIdsFromMentions } from '../utils/mentions.js';
 
 // GET /api/contests/:id/chat
 export const getContestMessages = async (req, res) => {
@@ -37,6 +40,21 @@ export const postContestMessage = async (req, res) => {
 
     await msg.save();
     await msg.populate('author', 'username cfHandle rank isWingMember avatarUrl');
+
+    // Handle Mentions
+    const mentionedUsernames = extractUsernames(text);
+    const mentionedIds = await getUserIdsFromMentions(mentionedUsernames);
+    const validIds = mentionedIds.filter(id => id !== req.user.id);
+    if (validIds.length > 0) {
+      const mentions = validIds.map(id => ({
+        recipient: id,
+        sender: req.user.id,
+        type: 'MENTION',
+        message: `${msg.author.username} mentioned you in a contest discussion: ${contest.title}`,
+        link: `/contests` // we can just link to contests page
+      }));
+      await Notification.insertMany(mentions);
+    }
 
     res.status(201).json({ message: msg });
   } catch (err) {

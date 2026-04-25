@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../apiConfig';
 import GlobalSearch from '../components/GlobalSearch';
+import NotificationBell from '../components/NotificationBell';
+import MentionsTextarea from '../components/MentionsTextarea';
 
 const ADMIN = 'Surendra_vishnoi';
 
@@ -294,7 +296,14 @@ function ContestDiscussion({ contestId, currentUser }) {
             </div>
           )}
           <div className="flex gap-2">
-            <input className="input-field py-3 px-4 shadow-inner-dark" placeholder="Share your thoughts…" value={input} onChange={e => setInput(e.target.value)} />
+            <MentionsTextarea 
+              className="input-field py-3 px-4 shadow-inner-dark flex-1 resize-none h-[46px]" 
+              placeholder="Share your thoughts…" 
+              value={input} 
+              onChange={setInput} 
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(e)}
+              rows={1}
+            />
             <button type="submit" disabled={!input.trim()} className="btn-primary px-6 shadow-btn font-bold">Post</button>
           </div>
         </form>
@@ -574,6 +583,7 @@ export default function ContestsPage() {
           </div>
           <GlobalSearch />
           <div className="ml-auto flex items-center gap-3">
+            {currentUser && <NotificationBell />}
             {!currentUser && <a href="/auth" className="btn-primary text-sm px-5 py-2 font-bold shadow-btn">Login</a>}
             {currentUser?.isAdmin && (
               <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 border border-transparent hover:border-purple-500/20 transition-all flex items-center gap-1.5 font-bold">

@@ -17,7 +17,7 @@ const postSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Insight', 'Doubt', 'General'],
+    enum: ['Insight', 'Doubt', 'General', 'Announcement'],
     required: true,
   },
   cfProblemId: {

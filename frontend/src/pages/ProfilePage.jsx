@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { API_BASE } from '../apiConfig';
 import { cfRankColor } from '../utils/cfRank.js';
 import GlobalSearch from '../components/GlobalSearch';
+import NotificationBell from '../components/NotificationBell';
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
@@ -155,6 +156,7 @@ export default function ProfilePage() {
           </div>
           <GlobalSearch />
           <div className="ml-auto flex items-center gap-2">
+            {currentUser && <NotificationBell />}
 
             <a href="/contests" className="text-slate-400 hover:text-slate-200 text-sm px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>

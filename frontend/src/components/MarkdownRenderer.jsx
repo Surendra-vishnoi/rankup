@@ -75,6 +75,13 @@ export default function MarkdownRenderer({ children = '', compact = false }) {
 
           /* ── Links — open in new tab ── */
           a({ href, children: linkChildren }) {
+            if (href && href.startsWith('/profile/')) {
+              return (
+                <a href={href} className="text-blue-400 font-bold hover:underline hover:text-blue-300 transition-colors">
+                  {linkChildren}
+                </a>
+              );
+            }
             return (
               <a
                 href={href}
@@ -88,7 +95,7 @@ export default function MarkdownRenderer({ children = '', compact = false }) {
           },
         }}
       >
-        {children}
+        {String(children).replace(/(?<!\w)@([a-zA-Z0-9_]+)/g, '[@$1](/profile/$1)')}
       </ReactMarkdown>
     </div>
   );

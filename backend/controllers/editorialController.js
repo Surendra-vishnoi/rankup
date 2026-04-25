@@ -1,5 +1,8 @@
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import { extractUsernames, getUserIdsFromMentions } from '../utils/mentions.js';
 
 /**
  * POST /api/editorials
@@ -41,9 +44,36 @@ export const createEditorial = async (req, res) => {
     await post.save();
 
     // Increment author's karma (5 for editorial)
-    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 5 } });
+    const authorUser = await User.findByIdAndUpdate(req.user.id, { $inc: { karma: 5 } });
 
     await post.populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle isVerified');
+
+    // Notify followers
+    if (authorUser.followers && authorUser.followers.length > 0) {
+      const notifications = authorUser.followers.map(followerId => ({
+        recipient: followerId,
+        sender: req.user.id,
+        type: 'NEW_EDITORIAL',
+        message: `${authorUser.username} posted a new editorial: ${post.title}`,
+        link: `/editorials?id=${post._id}`
+      }));
+      await Notification.insertMany(notifications);
+    }
+
+    // Handle Mentions
+    const mentionedUsernames = extractUsernames(post.solution);
+    const mentionedIds = await getUserIdsFromMentions(mentionedUsernames);
+    const validIds = mentionedIds.filter(id => id !== req.user.id);
+    if (validIds.length > 0) {
+      const mentions = validIds.map(id => ({
+        recipient: id,
+        sender: req.user.id,
+        type: 'MENTION',
+        message: `${authorUser.username} mentioned you in an editorial: ${post.title}`,
+        link: `/editorials?id=${post._id}`
+      }));
+      await Notification.insertMany(mentions);
+    }
 
     res.status(201).json({ post });
   } catch (err) {

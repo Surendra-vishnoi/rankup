@@ -1,0 +1,34 @@
+import mongoose from 'mongoose';
+
+const notificationSchema = new mongoose.Schema({
+  recipient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false // Optional, system notifications might not have a sender
+  },
+  type: {
+    type: String,
+    enum: ['NEW_EDITORIAL', 'ANNOUNCEMENT', 'MENTION'],
+    required: true
+  },
+  message: {
+    type: String,
+    required: true
+  },
+  link: {
+    type: String,
+    required: false
+  },
+  isRead: {
+    type: Boolean,
+    default: false
+  }
+}, { timestamps: true });
+
+const Notification = mongoose.model('Notification', notificationSchema);
+export default Notification;

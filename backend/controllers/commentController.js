@@ -1,5 +1,8 @@
 import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import { extractUsernames, getUserIdsFromMentions } from '../utils/mentions.js';
 
 // GET /api/posts/:postId/comments
 // Supports ?page=N and ?limit=N (defaults to limit=5)
@@ -55,7 +58,22 @@ export const addComment = async (req, res) => {
     await newComment.save();
     
     // Increment author's karma
-    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 1 } });
+    const authorUser = await User.findByIdAndUpdate(req.user.id, { $inc: { karma: 1 } });
+
+    // Handle Mentions
+    const mentionedUsernames = extractUsernames(content);
+    const mentionedIds = await getUserIdsFromMentions(mentionedUsernames);
+    const validIds = mentionedIds.filter(id => id !== req.user.id);
+    if (validIds.length > 0) {
+      const mentions = validIds.map(id => ({
+        recipient: id,
+        sender: req.user.id,
+        type: 'MENTION',
+        message: `${authorUser.username} mentioned you in a comment on: ${post.title}`,
+        link: `/?post=${post._id}`
+      }));
+      await Notification.insertMany(mentions);
+    }
 
     // Return with populated author so UI updates immediately
     await newComment.populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle');

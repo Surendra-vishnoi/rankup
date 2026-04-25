@@ -1,5 +1,8 @@
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import { extractUsernames, getUserIdsFromMentions } from '../utils/mentions.js';
 
 // GET /api/posts?category=Eureka
 export const getPosts = async (req, res) => {
@@ -42,9 +45,14 @@ export const createPost = async (req, res) => {
     if (!title || !content || !category) {
       return res.status(400).json({ message: 'Title, content, and category are required.' });
     }
-    const allowed = ['Insight', 'Doubt', 'General'];
+    const allowed = ['Insight', 'Doubt', 'General', 'Announcement'];
     if (!allowed.includes(category)) {
       return res.status(400).json({ message: 'Invalid category.' });
+    }
+
+    const authorUser = await User.findById(req.user.id);
+    if (category === 'Announcement' && !authorUser.isAdmin && !authorUser.isCoordinator && !authorUser.isWingMember) {
+      return res.status(403).json({ message: 'Only titled users can make announcements.' });
     }
 
     const post = new Post({
@@ -57,9 +65,40 @@ export const createPost = async (req, res) => {
     await post.save();
     
     // Increment author's karma (3 for post)
-    await Post.db.model('User').findByIdAndUpdate(req.user.id, { $inc: { karma: 3 } });
+    await User.findByIdAndUpdate(req.user.id, { $inc: { karma: 3 } });
 
     await post.populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle isVerified');
+
+    // Handle Notifications
+    if (category === 'Announcement') {
+      const allUsers = await User.find({ _id: { $ne: req.user.id } }).select('_id');
+      const notifications = allUsers.map(u => ({
+        recipient: u._id,
+        sender: req.user.id,
+        type: 'ANNOUNCEMENT',
+        message: `${authorUser.username} made a new announcement: ${post.title}`,
+        link: `/?post=${post._id}`
+      }));
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
+    } else {
+      // Handle Mentions
+      const mentionedUsernames = extractUsernames(post.content);
+      const mentionedIds = await getUserIdsFromMentions(mentionedUsernames);
+      const validIds = mentionedIds.filter(id => id !== req.user.id); // Don't notify self
+      
+      const notifications = validIds.map(id => ({
+        recipient: id,
+        sender: req.user.id,
+        type: 'MENTION',
+        message: `${authorUser.username} mentioned you in a post: ${post.title}`,
+        link: `/?post=${post._id}`
+      }));
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
+    }
 
     res.status(201).json({ post });
   } catch (err) {

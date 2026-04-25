@@ -3,6 +3,7 @@ import PostCard from '../components/PostCard.jsx';
 import CreatePostModal from '../components/CreatePostModal.jsx';
 import PostViewModal from '../components/PostViewModal.jsx';
 import { API_BASE } from '../apiConfig';
+import NotificationBell from '../components/NotificationBell.jsx';
 
 const TABS = [
   { key: 'all',      label: 'All',      emoji: '🌐' },
@@ -527,6 +528,8 @@ export default function HubPage() {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            {user && <NotificationBell />}
+            
             {/* Contests link */}
             <a href="/contests" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm" title="Contests Hub">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -714,6 +717,7 @@ export default function HubPage() {
         <CreatePostModal
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
+          currentUser={user}
         />
       )}
 
