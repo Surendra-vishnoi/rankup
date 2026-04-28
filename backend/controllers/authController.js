@@ -33,7 +33,33 @@ export const sendOTP = async (req, res) => {
     const newOTP = new OTP({ email, otp });
     await newOTP.save();
 
-    await sendEmail(email, 'Your RankUp Verification Code', `Your OTP is: ${otp}. It will expire in 5 minutes.`);
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0b0e14; color: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #1e293b;">
+        <h2 style="color: #38bdf8; text-align: center; margin-bottom: 30px; font-size: 28px;">RankUp Verification</h2>
+        <p style="font-size: 16px; line-height: 1.6; color: #94a3b8; text-align: center;">
+          Hello! You are receiving this email because you requested a verification code for your RankUp account.
+        </p>
+        <div style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); padding: 2px; border-radius: 8px; margin: 30px auto; width: fit-content;">
+          <div style="background-color: #0b0e14; padding: 20px 40px; border-radius: 6px;">
+            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #ffffff;">${otp}</span>
+          </div>
+        </div>
+        <p style="font-size: 14px; color: #64748b; text-align: center; margin-top: 30px;">
+          This code will expire in <strong>5 minutes</strong>. If you did not request this code, please ignore this email.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #1e293b; margin: 40px 0;">
+        <p style="font-size: 12px; color: #475569; text-align: center;">
+          © ${new Date().getFullYear()} RankUp. All rights reserved.
+        </p>
+      </div>
+    `;
+
+    await sendEmail(
+      email, 
+      'Your RankUp Verification Code', 
+      `Your RankUp verification code is: ${otp}`,
+      htmlContent
+    );
 
     res.status(200).json({ message: 'OTP sent successfully' });
   } catch (error) {
