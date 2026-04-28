@@ -445,6 +445,18 @@ export default function HubPage() {
         if (data.isAuthenticated) setUser(data.user);
       })
       .catch(() => setUser(null));
+
+    // Handle auto-open post from URL
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('post');
+    if (postId) {
+      fetch(`${API_BASE}/api/posts/${postId}`)
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          if (data.post) setSelectedPost(data.post);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const handleLogout = async () => {

@@ -155,3 +155,24 @@ export const deletePost = async (req, res) => {
     res.status(500).json({ message: 'Server error deleting post' });
   }
 };
+
+// GET /api/posts/:id
+export const getPostById = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate('author', 'username cfHandle rank rating isWingMember isAdmin isCoordinator customTitle isVerified');
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found.' });
+    }
+
+    const commentsCount = await Comment.countDocuments({ post: post._id });
+    const plain = post.toObject();
+    plain.commentsCount = commentsCount;
+
+    res.json({ post: plain });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

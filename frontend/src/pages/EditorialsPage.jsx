@@ -193,6 +193,13 @@ function SolutionSection({ solution }) {
 /* ─────────── Single Editorial Card (expandable) ─────────── */
 function EditorialCard({ post }) {
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id') === post._id) {
+      setExpanded(true);
+    }
+  }, [post._id]);
   const rank      = post.author?.rank || '';
   const rankColor = cfRankColor(rank);
   const catMeta   = { Insight: { emoji:'💡', color:'text-yellow-400', bg:'bg-yellow-400/10', border:'border-yellow-400/25' },
@@ -203,7 +210,7 @@ function EditorialCard({ post }) {
                       : [];
 
   return (
-    <article className="card-editorial overflow-hidden">
+    <article id={`editorial-${post._id}`} className="card-editorial overflow-hidden">
       {/* ── Header (always visible, clickable) ── */}
       <button
         className="w-full text-left p-5 flex flex-col gap-3"
@@ -354,7 +361,21 @@ export default function EditorialsPage() {
   useEffect(() => {
     fetch(`${API_BASE}/api/editorials`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => setEditorials(d.posts?.length ? d.posts : MOCK_EDITORIALS))
+      .then(d => {
+        const fetched = d.posts?.length ? d.posts : MOCK_EDITORIALS;
+        setEditorials(fetched);
+        
+        // Handle auto-expand from URL
+        const params = new URLSearchParams(window.location.search);
+        const linkedId = params.get('id');
+        if (linkedId) {
+          // Scroll to the element after a short delay to ensure rendering
+          setTimeout(() => {
+            const el = document.getElementById(`editorial-${linkedId}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 500);
+        }
+      })
       .catch(() => setEditorials(MOCK_EDITORIALS))
       .finally(() => setLoading(false));
   }, []);
