@@ -1,19 +1,64 @@
 import User from '../models/User.js';
+import OTP from '../models/OTP.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { sendEmail } from '../utils/sendEmail.js';
+
+
+// Register User
+// Send OTP
+export const sendOTP = async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    if (type === 'register') {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+    } else if (type === 'forgot-password') {
+      const existingUser = await User.findOne({ email });
+      if (!existingUser) {
+        return res.status(400).json({ message: 'User not found with this email' });
+      }
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await OTP.deleteMany({ email });
+    const newOTP = new OTP({ email, otp });
+    await newOTP.save();
+
+    await sendEmail(email, 'Your RankUp Verification Code', `Your OTP is: ${otp}. It will expire in 5 minutes.`);
+
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while sending OTP' });
+  }
+};
 
 // Register User
 export const registerUser = async (req, res) => {
   try {
-    const { username, password, cfHandle } = req.body;
+    const { username, password, cfHandle, email, otp } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
+    if (!username || !password || !email || !otp) {
+      return res.status(400).json({ message: 'Username, password, email, and OTP are required' });
     }
 
-    const existingUser = await User.findOne({ username });
+    const validOTP = await OTP.findOne({ email, otp });
+    if (!validOTP) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'Username already taken' });
+      return res.status(400).json({ message: 'Username or email already taken' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -21,11 +66,13 @@ export const registerUser = async (req, res) => {
 
     const newUser = new User({
       username,
+      email,
       password: hashedPassword,
       cfHandle,
     });
 
     await newUser.save();
+    await OTP.deleteOne({ _id: validOTP._id });
 
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -95,5 +142,37 @@ export const verifySession = async (req, res) => {
     res.json({ isAuthenticated: true, user: { id: user._id, username: user.username, cfHandle: user.cfHandle, isAdmin: user.isAdmin, isCoordinator: user.isCoordinator, customTitle: user.customTitle } });
   } catch (err) {
     return res.status(401).json({ isAuthenticated: false });
+  }
+};
+
+// Reset Password
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const validOTP = await OTP.findOne({ email, otp });
+    if (!validOTP) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    await OTP.deleteOne({ _id: validOTP._id });
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while resetting password' });
   }
 };

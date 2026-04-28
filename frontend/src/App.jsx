@@ -1,4 +1,5 @@
 import './index.css';
+import { useState, useEffect } from 'react';
 import HubPage from './pages/HubPage.jsx';
 import VerifyPage from './pages/VerifyPage.jsx';
 import CreateEditorialPage from './pages/CreateEditorialPage.jsx';
@@ -7,6 +8,8 @@ import AuthPage from './pages/AuthPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ContestsPage from './pages/ContestsPage.jsx';
+import ChatPanel from './components/ChatPanel.jsx';
+import { API_BASE } from './apiConfig.js';
 
 function Router() {
   const path = window.location.pathname;
@@ -21,5 +24,23 @@ function Router() {
 }
 
 export default function App() {
-  return <Router />;
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    // Only fetch session once per app load
+    fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.isAuthenticated) setCurrentUser(d.user); })
+      .catch(() => {});
+  }, []);
+
+  // Don't show chat panel on auth page
+  const showChat = currentUser && window.location.pathname !== '/auth';
+
+  return (
+    <>
+      <Router />
+      {showChat && <ChatPanel currentUser={currentUser} />}
+    </>
+  );
 }
