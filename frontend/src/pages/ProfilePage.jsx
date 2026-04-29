@@ -419,9 +419,9 @@ export default function ProfilePage() {
                 ))}
               </div>
             ) : activeTab === 'posts' ? (
-              <PostsTab posts={activity.posts} />
+              <PostsTab posts={activity.posts} currentUser={currentUser} />
             ) : activeTab === 'editorials' ? (
-              <EditorialsTab editorials={activity.editorials} />
+              <EditorialsTab editorials={activity.editorials} currentUser={currentUser} />
             ) : (
               <CommentsTab comments={activity.comments} />
             )}
@@ -448,7 +448,7 @@ const CAT_COLOR = {
 };
 const CAT_EMOJI = { Insight: '💡', Doubt: '🐛', General: '☕' };
 
-function PostsTab({ posts }) {
+function PostsTab({ posts, currentUser }) {
   if (!posts.length) return <EmptyState icon="📝" text="No posts yet." />;
   return (
     <div className="flex flex-col gap-3">
@@ -470,6 +470,20 @@ function PostsTab({ posts }) {
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
               {p.upvotes?.length ?? 0} upvotes
             </span>
+            {currentUser?.isAdmin && (
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!window.confirm('Delete post?')) return;
+                  await fetch(`${API_BASE}/api/posts/${p._id}`, { method: 'DELETE', credentials: 'include' });
+                  window.location.reload();
+                }}
+                className="ml-auto text-red-400 hover:text-red-300 font-bold"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </a>
       ))}
@@ -477,7 +491,7 @@ function PostsTab({ posts }) {
   );
 }
 
-function EditorialsTab({ editorials }) {
+function EditorialsTab({ editorials, currentUser }) {
   if (!editorials.length) return <EmptyState icon="⭐" text="No editorials yet." />;
   return (
     <div className="flex flex-col gap-3">
@@ -500,7 +514,23 @@ function EditorialsTab({ editorials }) {
             <span className="text-xs text-slate-500 ml-auto">{timeAgo(e.createdAt)}</span>
           </div>
           <p className="text-sm font-semibold text-yellow-50 group-hover:text-yellow-300 transition-colors line-clamp-2">{e.title}</p>
-          <p className="text-xs text-slate-500">{e.upvotes?.length ?? 0} upvotes</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500">{e.upvotes?.length ?? 0} upvotes</p>
+            {currentUser?.isAdmin && (
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!window.confirm('Delete editorial?')) return;
+                  await fetch(`${API_BASE}/api/editorials/${e._id}`, { method: 'DELETE', credentials: 'include' });
+                  window.location.reload();
+                }}
+                className="text-red-400 hover:text-red-300 text-xs font-bold"
+              >
+                Delete
+              </button>
+            )}
+          </div>
         </a>
       ))}
     </div>

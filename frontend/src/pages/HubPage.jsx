@@ -649,7 +649,7 @@ export default function HubPage() {
                   <p className="text-slate-600 text-sm mt-1">Be the first to post in this category!</p>
                 </div>
               ) : (
-                filtered.map(post => <PostCard key={post._id} post={post} onOpen={setSelectedPost} />)
+                filtered.map(post => <PostCard key={post._id} post={post} onOpen={setSelectedPost} currentUser={user} />)
               )}
             </div>
           </div>

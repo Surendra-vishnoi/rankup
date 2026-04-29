@@ -133,3 +133,25 @@ export const getEditorialById = async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 };
+
+/**
+ * DELETE /api/editorials/:id
+ */
+export const deleteEditorial = async (req, res) => {
+  try {
+    const requestingUser = await User.findById(req.user.id);
+    if (!requestingUser || !requestingUser.isAdmin) {
+      return res.status(403).json({ message: 'Only admin can delete editorials.' });
+    }
+
+    const post = await Post.findOneAndDelete({ _id: req.params.id, isEditorial: true });
+    if (!post) {
+      return res.status(404).json({ message: 'Editorial not found.' });
+    }
+
+    res.json({ message: 'Editorial deleted successfully.' });
+  } catch (err) {
+    console.error('deleteEditorial error:', err);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};

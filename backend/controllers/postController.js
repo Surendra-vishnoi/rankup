@@ -137,10 +137,11 @@ export const upvotePost = async (req, res) => {
 };
 
 // DELETE /api/posts/:id
-// Only admin allowed
+// Admin allowed
 export const deletePost = async (req, res) => {
   try {
-    if (req.user.username !== 'Surendra_vishnoi') {
+    const requestingUser = await User.findById(req.user.id);
+    if (!requestingUser || !requestingUser.isAdmin) {
       return res.status(403).json({ message: 'Only admin can delete posts.' });
     }
 

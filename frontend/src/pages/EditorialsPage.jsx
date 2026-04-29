@@ -191,7 +191,7 @@ function SolutionSection({ solution }) {
 }
 
 /* ─────────── Single Editorial Card (expandable) ─────────── */
-function EditorialCard({ post }) {
+function EditorialCard({ post, currentUser }) {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
@@ -289,7 +289,27 @@ function EditorialCard({ post }) {
               </svg>
               {post.upvotes?.length ?? 0}
             </span>
-            {/* Hint count removed as per request */}
+            {currentUser?.isAdmin && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!window.confirm('Delete this editorial?')) return;
+                  try {
+                    const res = await fetch(`${API_BASE}/api/editorials/${post._id}`, {
+                      method: 'DELETE', credentials: 'include',
+                    });
+                    if (res.ok) window.location.reload();
+                    else alert('Failed to delete.');
+                  } catch { alert('Error deleting.'); }
+                }}
+                className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all ml-1"
+                title="Delete Editorial"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </button>
@@ -509,7 +529,7 @@ export default function EditorialsPage() {
                   </p>
                 </div>
               ) : (
-                filtered.map(post => <EditorialCard key={post._id} post={post} />)
+                filtered.map(post => <EditorialCard key={post._id} post={post} currentUser={currentUser} />)
               )}
             </div>
           </div>
