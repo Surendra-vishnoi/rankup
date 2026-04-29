@@ -299,7 +299,10 @@ export default function ProfilePage() {
 
                 <p className="text-xs text-slate-500">
                   Joined {new Date(user?.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-                </p              {/* Actions */}
+                </p>
+              </div>
+
+              {/* Actions */}
               <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:items-end gap-2">
                 {isOwn ? (
                   <button 
@@ -357,7 +360,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 ) : null}
-              </div>null}
               </div>
             </div>
           )}
