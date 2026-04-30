@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PostCard from '../components/PostCard.jsx';
 import CreatePostModal from '../components/CreatePostModal.jsx';
-import PostViewModal from '../components/PostViewModal.jsx';
 import { API_BASE } from '../apiConfig';
 import NotificationBell from '../components/NotificationBell.jsx';
 
@@ -434,7 +433,6 @@ export default function HubPage() {
   const [posts, setPosts]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
   const [searchQuery, setSearch]    = useState('');
   const [user, setUser]             = useState(null);
 
@@ -450,12 +448,7 @@ export default function HubPage() {
     const params = new URLSearchParams(window.location.search);
     const postId = params.get('post');
     if (postId) {
-      fetch(`${API_BASE}/api/posts/${postId}`)
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(data => {
-          if (data.post) setSelectedPost(data.post);
-        })
-        .catch(() => {});
+      window.location.href = `/post/${postId}`;
     }
   }, []);
 
@@ -649,7 +642,7 @@ export default function HubPage() {
                   <p className="text-slate-600 text-sm mt-1">Be the first to post in this category!</p>
                 </div>
               ) : (
-                filtered.map(post => <PostCard key={post._id} post={post} onOpen={setSelectedPost} currentUser={user} />)
+                filtered.map(post => <PostCard key={post._id} post={post} currentUser={user} />)
               )}
             </div>
           </div>
@@ -729,15 +722,6 @@ export default function HubPage() {
         <CreatePostModal
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
-          currentUser={user}
-        />
-      )}
-
-      {/* ── Post View Modal ── */}
-      {selectedPost && (
-        <PostViewModal
-          post={selectedPost}
-          onClose={() => setSelectedPost(null)}
           currentUser={user}
         />
       )}

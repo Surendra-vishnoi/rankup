@@ -457,7 +457,7 @@ function PostsTab({ posts, currentUser }) {
       {posts.map(p => (
         <a
           key={p._id}
-          href={`/?post=${p._id}`}
+          href={`/post/${p._id}`}
           className="flex flex-col gap-2 p-4 rounded-xl border border-white/[0.06] hover:border-accent/30 hover:bg-white/[0.02] transition-all group"
         >
           <div className="flex items-center gap-2 flex-wrap">
@@ -500,7 +500,7 @@ function EditorialsTab({ editorials, currentUser }) {
       {editorials.map(e => (
         <a
           key={e._id}
-          href={`/editorials?id=${e._id}`}
+          href={`/editorial/${e._id}`}
           className="flex flex-col gap-2 p-4 rounded-xl border border-yellow-500/20 hover:border-yellow-400/40 hover:bg-yellow-500/[0.03] transition-all group"
           style={{ background: 'linear-gradient(135deg, rgba(234,179,8,0.04) 0%, transparent 60%)' }}
         >

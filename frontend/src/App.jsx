@@ -8,6 +8,7 @@ import AuthPage from './pages/AuthPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ContestsPage from './pages/ContestsPage.jsx';
+import PostPage from './pages/PostPage.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
 import { API_BASE } from './apiConfig.js';
 
@@ -20,6 +21,7 @@ function Router() {
   if (path === '/editorials')        return <EditorialsPage />;
   if (path === '/contests')          return <ContestsPage />;
   if (path.startsWith('/profile/'))  return <ProfilePage />;
+  if (path.startsWith('/post/') || path.startsWith('/editorial/')) return <PostPage />;
   return <HubPage />;
 }
 

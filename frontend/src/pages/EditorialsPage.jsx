@@ -112,94 +112,9 @@ int main() {
   },
 ];
 
-/* ─────────── Single Hint row (independently collapsible) ─────────── */
-function HintRow({ index, text }) {
-  const [open, setOpen] = useState(false);
-  const COLORS = [
-    { ring: 'border-amber-400/50 text-amber-400 bg-amber-400/10', label: 'text-amber-400' },
-    { ring: 'border-orange-400/50 text-orange-400 bg-orange-400/10', label: 'text-orange-400' },
-    { ring: 'border-yellow-300/50 text-yellow-300 bg-yellow-300/10', label: 'text-yellow-300' },
-  ];
-  const col = COLORS[index % COLORS.length];
-
-  return (
-    <div className="rounded-xl border border-white/[0.07] overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 group/hint hover:bg-white/[0.03] transition-colors"
-        aria-expanded={open}
-      >
-        <div className="flex items-center gap-2.5">
-          <span className={`flex-shrink-0 w-6 h-6 rounded-full border text-[11px] font-extrabold flex items-center justify-center ${col.ring}`}>
-            {index + 1}
-          </span>
-          <span className={`text-sm font-semibold ${col.label}`}>
-            Hint {index + 1}
-          </span>
-        </div>
-        <svg
-          className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-        >
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      {open && (
-        <div className="px-5 pb-4 pt-1 border-t border-white/[0.05] animate-fade-in">
-          <MarkdownRenderer>{text}</MarkdownRenderer>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─────────── Solution section (collapsible) ─────────── */
-function SolutionSection({ solution }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="rounded-xl border border-accent/20 overflow-hidden bg-accent/[0.03]">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
-        aria-expanded={open}
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-accent-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-            </svg>
-          </span>
-          <span className="text-sm font-semibold text-accent-light">Full Solution</span>
-        </div>
-        <svg
-          className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-        >
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      {open && (
-        <div className="px-5 pb-5 pt-2 border-t border-white/[0.05] animate-fade-in">
-          <MarkdownRenderer>{solution}</MarkdownRenderer>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ─────────── Single Editorial Card (expandable) ─────────── */
 function EditorialCard({ post, currentUser }) {
-  const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('id') === post._id) {
-      setExpanded(true);
-    }
-  }, [post._id]);
   const rank      = post.author?.rank || '';
   const rankColor = cfRankColor(rank);
   const catMeta   = { Insight: { emoji:'💡', color:'text-yellow-400', bg:'bg-yellow-400/10', border:'border-yellow-400/25' },
@@ -211,11 +126,10 @@ function EditorialCard({ post, currentUser }) {
 
   return (
     <article id={`editorial-${post._id}`} className="card-editorial overflow-hidden">
-      {/* ── Header (always visible, clickable) ── */}
+      {/* ── Header (clickable) ── */}
       <button
         className="w-full text-left p-5 flex flex-col gap-3"
-        onClick={() => setExpanded(e => !e)}
-        aria-expanded={expanded}
+        onClick={() => window.location.href = `/editorial/${post._id}`}
       >
         {/* Badges row */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -232,14 +146,6 @@ function EditorialCard({ post, currentUser }) {
           </div>
           <div className="flex items-center gap-2">
             {post.createdAt && <span className="text-xs text-slate-500">{timeAgo(post.createdAt)}</span>}
-            {/* Expand chevron */}
-            <span className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-200
-              ${expanded ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' : 'border-white/10 text-slate-500'}`}>
-              <svg className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </span>
           </div>
         </div>
 
@@ -313,25 +219,6 @@ function EditorialCard({ post, currentUser }) {
           </div>
         </div>
       </button>
-
-      {/* ── Expanded body ── */}
-      {expanded && (
-        <div className="px-5 pb-5 flex flex-col gap-3 border-t border-amber-500/15 pt-4 animate-fade-in">
-
-          {/* Hints — each independently collapsible */}
-          {hints.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-500/50 px-1 mb-0.5">
-                Progressive Hints
-              </p>
-              {hints.map((h, i) => <HintRow key={i} index={i} text={h} />)}
-            </div>
-          )}
-
-          {/* Solution — collapsible */}
-          {post.solution && <SolutionSection solution={post.solution} />}
-        </div>
-      )}
     </article>
   );
 }
@@ -389,11 +276,7 @@ export default function EditorialsPage() {
         const params = new URLSearchParams(window.location.search);
         const linkedId = params.get('id');
         if (linkedId) {
-          // Scroll to the element after a short delay to ensure rendering
-          setTimeout(() => {
-            const el = document.getElementById(`editorial-${linkedId}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 500);
+          window.location.href = `/editorial/${linkedId}`;
         }
       })
       .catch(() => setEditorials(MOCK_EDITORIALS))

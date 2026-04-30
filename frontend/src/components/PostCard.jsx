@@ -44,7 +44,7 @@ function Avatar({ username, rank, isWingMember, size = 9 }) {
 /* ─────────────────────────────────────────
    PostCard — Twitter / X inspired design
    ───────────────────────────────────────── */
-export default function PostCard({ post, onOpen, currentUser }) {
+export default function PostCard({ post, currentUser }) {
   const cat    = CAT[post.category] || CAT.General;
   const rank   = post.author?.rank || '';
   const color  = cfRankColor(rank);
@@ -104,8 +104,8 @@ export default function PostCard({ post, onOpen, currentUser }) {
 
   return (
     <article
-      onClick={() => onOpen?.(post)}
-      onKeyDown={e => e.key === 'Enter' && onOpen?.(post)}
+      onClick={() => window.location.href = post.isEditorial ? `/editorial/${post._id}` : `/post/${post._id}`}
+      onKeyDown={e => e.key === 'Enter' && (window.location.href = post.isEditorial ? `/editorial/${post._id}` : `/post/${post._id}`)}
       tabIndex={0}
       role="button"
       aria-label={`Open post: ${post.title}`}
