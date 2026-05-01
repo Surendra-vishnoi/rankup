@@ -9,6 +9,7 @@ import AdminPage from './pages/AdminPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ContestsPage from './pages/ContestsPage.jsx';
 import PostPage from './pages/PostPage.jsx';
+import ArenaPage from './pages/ArenaPage.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
 import { API_BASE } from './apiConfig.js';
 
@@ -22,6 +23,7 @@ function Router() {
   if (path === '/contests')          return <ContestsPage />;
   if (path.startsWith('/profile/'))  return <ProfilePage />;
   if (path.startsWith('/post/') || path.startsWith('/editorial/')) return <PostPage />;
+  if (path === '/arena')             return <ArenaPage />;
   return <HubPage />;
 }
 
@@ -36,8 +38,8 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Don't show chat panel on auth page
-  const showChat = currentUser && window.location.pathname !== '/auth';
+  // Don't show chat panel on auth page or arena
+  const showChat = currentUser && window.location.pathname !== '/auth' && window.location.pathname !== '/arena';
 
   return (
     <>

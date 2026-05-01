@@ -64,6 +64,13 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  arenaElo: {
+    type: Number,
+    default: 1000,
+  },
+  arenaWins: { type: Number, default: 0 },
+  arenaLosses: { type: Number, default: 0 },
+  arenaDraws: { type: Number, default: 0 },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
