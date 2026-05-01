@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage.jsx';
 import ContestsPage from './pages/ContestsPage.jsx';
 import PostPage from './pages/PostPage.jsx';
 import ArenaPage from './pages/ArenaPage.jsx';
+import RecommenderPage from './pages/RecommenderPage.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
 import { API_BASE } from './apiConfig.js';
 
@@ -21,6 +22,7 @@ function Router() {
   if (path === '/create-editorial')  return <CreateEditorialPage />;
   if (path === '/editorials')        return <EditorialsPage />;
   if (path === '/contests')          return <ContestsPage />;
+  if (path === '/recommender')       return <RecommenderPage />;
   if (path.startsWith('/profile/'))  return <ProfilePage />;
   if (path.startsWith('/post/') || path.startsWith('/editorial/')) return <PostPage />;
   if (path === '/arena')             return <ArenaPage />;

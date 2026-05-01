@@ -304,7 +304,7 @@ export default function EditorialsPage() {
 
       {/* ── Navbar ── */}
       <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
             <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
@@ -357,7 +357,7 @@ export default function EditorialsPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="flex gap-8">
 
           {/* ── Main Feed ── */}

@@ -6,8 +6,8 @@ import NotificationBell from '../components/NotificationBell';
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
-  if (diff < 60)    return `${Math.floor(diff)}s ago`;
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
@@ -27,22 +27,22 @@ function StatCard({ label, value, icon, color = 'text-slate-100' }) {
 }
 
 const ACTIVITY_TABS = [
-  { key: 'posts',      label: 'Discussions',      emoji: '📝' },
+  { key: 'posts', label: 'Discussions', emoji: '📝' },
   { key: 'editorials', label: 'Editorials', emoji: '⭐' },
-  { key: 'comments',   label: 'Comments',   emoji: '💬' },
+  { key: 'comments', label: 'Comments', emoji: '💬' },
 ];
 
 export default function ProfilePage() {
   // Extract username from path: /profile/:username
   const username = window.location.pathname.split('/profile/')[1]?.split('?')[0] || '';
 
-  const [profile, setProfile]     = useState(null);
-  const [activity, setActivity]   = useState({ posts: [], editorials: [], comments: [] });
-  const [cfStats, setCfStats]     = useState({ solved: null, rating: null, rank: null });
+  const [profile, setProfile] = useState(null);
+  const [activity, setActivity] = useState({ posts: [], editorials: [], comments: [] });
+  const [cfStats, setCfStats] = useState({ solved: null, rating: null, rank: null });
   const [activeTab, setActiveTab] = useState('posts');
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [actLoading, setActLoading] = useState(true);
-  const [error, setError]         = useState(null);
+  const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [showEditRoles, setShowEditRoles] = useState(false);
 
@@ -51,7 +51,7 @@ export default function ProfilePage() {
     fetch(`${API_BASE}/api/auth/verify`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.isAuthenticated) setCurrentUser(d.user); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleLogout = async () => {
@@ -82,9 +82,9 @@ export default function ProfilePage() {
     setActLoading(true);
     fetch(`${API_BASE}/api/users/${encodeURIComponent(username)}/activity`)
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { 
-        setActivity(data); 
-        setActLoading(false); 
+      .then(data => {
+        setActivity(data);
+        setActLoading(false);
         if (data.posts?.length === 0) {
           if (data.editorials?.length > 0) setActiveTab('editorials');
           else if (data.comments?.length > 0) setActiveTab('comments');
@@ -104,23 +104,23 @@ export default function ProfilePage() {
       const cfUser = info?.result?.[0];
       const solved = status?.status === 'OK'
         ? new Set(
-            status.result
-              .filter(s => s.verdict === 'OK' && s.problem?.contestId && s.problem?.index)
-              .map(s => `${s.problem.contestId}${s.problem.index}`)
-          ).size
+          status.result
+            .filter(s => s.verdict === 'OK' && s.problem?.contestId && s.problem?.index)
+            .map(s => `${s.problem.contestId}${s.problem.index}`)
+        ).size
         : null;
       setCfStats({
         rating: cfUser?.rating ?? null,
         rank: cfUser?.rank ?? null,
         solved,
       });
-    }).catch(() => {});
+    }).catch(() => { });
   }, [profile]);
 
-  const user   = profile?.user;
-  const stats  = profile?.stats;
-  const color  = cfRankColor(cfStats.rank || user?.rank || '');
-  const isOwn  = currentUser && user && currentUser.username === user.username;
+  const user = profile?.user;
+  const stats = profile?.stats;
+  const color = cfRankColor(cfStats.rank || user?.rank || '');
+  const isOwn = currentUser && user && currentUser.username === user.username;
 
   if (error) return (
     <div className="min-h-screen bg-bg-deep flex items-center justify-center">
@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
       {/* Navbar */}
       <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
             <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
@@ -159,7 +159,7 @@ export default function ProfilePage() {
             {currentUser && <NotificationBell />}
 
             <a href="/contests" className="text-slate-400 hover:text-slate-200 text-sm px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
               Contests
             </a>
             {currentUser?.isAdmin && (
@@ -172,7 +172,7 @@ export default function ProfilePage() {
                 onClick={handleLogout}
                 className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-semibold"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                 Logout
               </button>
             )}
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Profile Header Card */}
         <div className="card p-6 mb-6">
           {loading ? (
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                   )}
                 </div>
                 {isOwn && (
-                  <button 
+                  <button
                     onClick={() => {
                       const url = prompt('Enter image URL for your avatar:', user?.avatarUrl || '');
                       if (url !== null) {
@@ -260,13 +260,13 @@ export default function ProfilePage() {
                     </span>
                   ) : user?.isWingMember && (
                     <span className="badge-wing">
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/></svg>
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z" /></svg>
                       Wing Member
                     </span>
                   )}
                   {user?.isVerified && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" /></svg>
                       CF Verified
                     </span>
                   )}
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                       className="inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
                       style={{ color }}
                     >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" /></svg>
                       {user.cfHandle}
                       {(cfStats.rank || user.rank) && (
                         <span className="ml-1 capitalize font-normal text-xs opacity-80">
@@ -338,11 +338,10 @@ export default function ProfilePage() {
                           console.error('Follow action failed', err);
                         }
                       }}
-                      className={`flex items-center justify-center gap-1.5 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-btn ${
-                        stats?.isFollowing 
-                        ? 'bg-bg-surface border border-white/10 text-slate-300 hover:bg-white/5 hover:border-white/20' 
-                        : 'bg-gradient-to-r from-accent to-accent-violet text-white hover:scale-[1.02]'
-                      }`}
+                      className={`flex items-center justify-center gap-1.5 px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-btn ${stats?.isFollowing
+                          ? 'bg-bg-surface border border-white/10 text-slate-300 hover:bg-white/5 hover:border-white/20'
+                          : 'bg-gradient-to-r from-accent to-accent-violet text-white hover:scale-[1.02]'
+                        }`}
                     >
                       {stats?.isFollowing ? 'Following' : 'Follow'}
                     </button>
@@ -413,7 +412,7 @@ export default function ProfilePage() {
           <div className="p-4">
             {actLoading ? (
               <div className="flex flex-col gap-3">
-                {[1,2,3].map(i => (
+                {[1, 2, 3].map(i => (
                   <div key={i} className="animate-pulse flex flex-col gap-2 p-3 border border-white/5 rounded-xl">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
@@ -445,7 +444,7 @@ export default function ProfilePage() {
 
 const CAT_COLOR = {
   Insight: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-  Doubt:   'text-red-400 bg-red-400/10 border-red-400/30',
+  Doubt: 'text-red-400 bg-red-400/10 border-red-400/30',
   General: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
 };
 const CAT_EMOJI = { Insight: '💡', Doubt: '🐛', General: '☕' };
@@ -469,7 +468,7 @@ function PostsTab({ posts, currentUser }) {
           <p className="text-sm font-semibold text-slate-200 group-hover:text-accent transition-colors line-clamp-2">{p.title}</p>
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <span className="flex items-center gap-1">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" /><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>
               {p.upvotes?.length ?? 0} upvotes
             </span>
             {currentUser?.isAdmin && (
@@ -553,7 +552,7 @@ function CommentsTab({ comments }) {
               href={`/?post=${c.post._id}`}
               className="text-xs text-slate-500 hover:text-accent transition-colors flex items-center gap-1"
             >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
               On: {c.post.title}
             </a>
           )}
@@ -613,25 +612,25 @@ function EditRolesModal({ user, onClose, onSuccess }) {
         {error && <div className="text-red-400 text-sm mb-4 bg-red-400/10 p-2 rounded">{error}</div>}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={form.isAdmin} onChange={e => setForm({...form, isAdmin: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <input type="checkbox" checked={form.isAdmin} onChange={e => setForm({ ...form, isAdmin: e.target.checked })} className="w-4 h-4 accent-accent" />
             <span className="text-sm font-semibold text-slate-200">Is Admin</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={form.isCoordinator} onChange={e => setForm({...form, isCoordinator: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <input type="checkbox" checked={form.isCoordinator} onChange={e => setForm({ ...form, isCoordinator: e.target.checked })} className="w-4 h-4 accent-accent" />
             <span className="text-sm font-semibold text-slate-200">Is Coordinator</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={form.isWingMember} onChange={e => setForm({...form, isWingMember: e.target.checked})} className="w-4 h-4 accent-accent" />
+            <input type="checkbox" checked={form.isWingMember} onChange={e => setForm({ ...form, isWingMember: e.target.checked })} className="w-4 h-4 accent-accent" />
             <span className="text-sm font-semibold text-slate-200">Is Wing Member</span>
           </label>
           <div>
             <label className="text-xs text-slate-500 mb-1 block">Custom Title</label>
-            <input 
-              type="text" 
-              value={form.customTitle} 
-              onChange={e => setForm({...form, customTitle: e.target.value})} 
-              className="input-field py-1.5" 
-              placeholder="e.g. Master Chef" 
+            <input
+              type="text"
+              value={form.customTitle}
+              onChange={e => setForm({ ...form, customTitle: e.target.value })}
+              className="input-field py-1.5"
+              placeholder="e.g. Master Chef"
             />
           </div>
           <div className="flex justify-end gap-2 mt-2">

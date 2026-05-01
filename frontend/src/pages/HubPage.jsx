@@ -503,7 +503,7 @@ export default function HubPage() {
 
       {/* ── Navbar ── */}
       <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <div className="w-full px-6 lg:px-10 h-14 flex items-center justify-between gap-4">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">
@@ -535,6 +535,12 @@ export default function HubPage() {
           <div className="flex items-center gap-1">
             {user && <NotificationBell />}
             
+            {/* Recommender link */}
+            <a href="/recommender" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm whitespace-nowrap" title="Problem Recommender">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              Problem Recommender
+            </a>
+
             {/* Contests link */}
             <a href="/contests" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm" title="Contests Hub">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -600,7 +606,7 @@ export default function HubPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* ── Feed column ── */}
           <div className="flex-1 min-w-0">
