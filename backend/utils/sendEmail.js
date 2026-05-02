@@ -9,14 +9,21 @@ export const sendEmail = async (to, subject, text, html) => {
                          process.env.SMTP_PASS;
 
   if (isSmtpConfigured) {
-    // Use real SMTP configuration
+    const port   = parseInt(process.env.SMTP_PORT || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true'; // true only for port 465
+
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      port,
+      secure,           // false for 587 (STARTTLS), true for 465 (SSL)
+      requireTLS: !secure, // force STARTTLS upgrade on port 587
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
+      },
+      tls: {
+        // Do not fail on self-signed certs (helpful in some environments)
+        rejectUnauthorized: false,
       },
     });
   } else {
@@ -48,7 +55,6 @@ export const sendEmail = async (to, subject, text, html) => {
     console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
     console.log('-----------------------');
   }
-  
+
   return info;
 };
-
