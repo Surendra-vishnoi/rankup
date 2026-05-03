@@ -1,5 +1,6 @@
 import './index.css';
 import { useState, useEffect } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import HubPage from './pages/HubPage.jsx';
 import VerifyPage from './pages/VerifyPage.jsx';
 import CreateEditorialPage from './pages/CreateEditorialPage.jsx';
@@ -43,10 +44,12 @@ export default function App() {
   // Don't show chat panel on auth page or arena
   const showChat = currentUser && window.location.pathname !== '/auth' && window.location.pathname !== '/arena';
 
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID';
+
   return (
-    <>
+    <GoogleOAuthProvider clientId={clientId}>
       <Router />
       {showChat && <ChatPanel currentUser={currentUser} />}
-    </>
+    </GoogleOAuthProvider>
   );
 }

@@ -9,7 +9,12 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    // not required to support google login without password
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   email: {
     type: String,

@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [showEditRoles, setShowEditRoles] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Fetch current session
   useEffect(() => {
@@ -305,15 +306,24 @@ export default function ProfilePage() {
               {/* Actions */}
               <div className="mt-4 sm:mt-0 sm:ml-auto flex flex-col sm:items-end gap-2">
                 {isOwn ? (
-                  <button 
-                    onClick={handleLogout}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:border-red-400/40 transition-colors shadow-sm"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                    Logout
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowChangePassword(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Password
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:border-red-400/40 transition-colors shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                      </svg>
+                      Logout
+                    </button>
+                  </div>
                 ) : currentUser ? (
                   <div className="flex flex-col sm:items-end gap-2">
                     <button
@@ -437,6 +447,11 @@ export default function ProfilePage() {
           onClose={() => setShowEditRoles(false)}
           onSuccess={() => window.location.reload()}
         />
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
       )}
     </div>
   );
@@ -640,6 +655,93 @@ function EditRolesModal({ user, onClose, onSuccess }) {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function ChangePasswordModal({ onClose }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPassword) {
+      setError('New password is required.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(onClose, 2000);
+      } else {
+        setError(data.message || 'Failed to change password.');
+      }
+    } catch (err) {
+      setError('Could not connect to server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="card p-6 w-full max-w-sm">
+        <h2 className="text-lg font-bold text-slate-100 mb-4">Change Password</h2>
+        
+        {success ? (
+          <div className="py-8 text-center text-emerald-400 font-bold">
+            <div className="text-4xl mb-2">✅</div>
+            Password updated!
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {error && <div className="text-red-400 text-xs font-semibold bg-red-500/10 border border-red-500/20 p-2 rounded-xl text-center">{error}</div>}
+            
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Current Password</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                className="input-field py-2"
+                placeholder="Required if you have one"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">Leave blank if you signed up with Google.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="input-field py-2"
+                placeholder="New strong password"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-2">
+              <button type="button" onClick={onClose} className="btn-ghost px-4 py-2">Cancel</button>
+              <button type="submit" disabled={loading} className="btn-primary px-4 py-2 flex items-center justify-center min-w-[100px]">
+                {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Update'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
