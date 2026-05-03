@@ -63,8 +63,12 @@ export const sendOTP = async (req, res) => {
 
     res.status(200).json({ message: 'OTP sent successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error while sending OTP' });
+    console.error('[SendOTP Error]', error);
+    res.status(500).json({ 
+      message: 'Server error while sending OTP', 
+      error: error.message || error.toString(),
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
