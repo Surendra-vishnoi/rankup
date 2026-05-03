@@ -1,4 +1,9 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Force Node.js to prefer IPv4 over IPv6 for DNS resolution globally
+// This prevents ENETUNREACH errors on cloud providers with broken IPv6 routing
+dns.setDefaultResultOrder('ipv4first');
 
 export const sendEmail = async (to, subject, text, html) => {
   let transporter;
