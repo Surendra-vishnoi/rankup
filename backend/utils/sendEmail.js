@@ -17,6 +17,7 @@ export const sendEmail = async (to, subject, text, html) => {
       port,
       secure,           // false for 587 (STARTTLS), true for 465 (SSL)
       requireTLS: !secure, // force STARTTLS upgrade on port 587
+      family: 4,        // force IPv4 to avoid ENETUNREACH on Render's IPv6
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
