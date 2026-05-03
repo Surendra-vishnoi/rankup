@@ -6,6 +6,7 @@ import {
   getUserProfile,
   getUserActivity,
   updateUserProfile,
+  updateUsername,
   searchUsers,
   updateUserRoles,
   getAllUsers,
@@ -32,6 +33,7 @@ router.put('/users/:username/roles', requireAuth, updateUserRoles);
 
 // Authenticated user
 router.put('/users/profile', requireAuth, updateUserProfile);
+router.put('/users/profile/username', requireAuth, updateUsername);
 router.post('/users/:username/follow', requireAuth, followUser);
 router.post('/users/:username/unfollow', requireAuth, unfollowUser);
 

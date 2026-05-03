@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
 import Contest from '../models/Contest.js';
+import jwt from 'jsonwebtoken';
 
 // GET /api/users/top-rankers
 // Returns top 10 verified users sorted by CF rating descending
@@ -228,6 +229,49 @@ export const updateUserProfile = async (req, res) => {
     res.json({ message: 'Profile updated successfully', user: updatedUser });
   } catch (err) {
     console.error('updateUserProfile error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// PUT /api/users/profile/username
+export const updateUsername = async (req, res) => {
+  try {
+    const { newUsername } = req.body;
+    if (!newUsername || !newUsername.trim()) {
+      return res.status(400).json({ message: 'New username is required.' });
+    }
+
+    const username = newUsername.trim();
+    
+    // Check if taken
+    const existing = await User.findOne({ username: new RegExp(`^${username}$`, 'i') });
+    if (existing) {
+      return res.status(400).json({ message: 'Username is already taken.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    user.username = username;
+    await user.save();
+
+    // Re-issue JWT token with the new username
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ message: 'Username updated successfully', username: user.username });
+  } catch (err) {
+    console.error('updateUsername error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
