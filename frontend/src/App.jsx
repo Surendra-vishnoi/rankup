@@ -44,7 +44,7 @@ export default function App() {
   // Don't show chat panel on auth page or arena
   const showChat = currentUser && window.location.pathname !== '/auth' && window.location.pathname !== '/arena';
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID';
+  const clientId = '9419506979-o8r2ggcfuebkrp6i6q0tnrksnahipv5o.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
