@@ -3,6 +3,7 @@ import PostCard from '../components/PostCard.jsx';
 import CreatePostModal from '../components/CreatePostModal.jsx';
 import { API_BASE } from '../apiConfig';
 import NotificationBell from '../components/NotificationBell.jsx';
+import ProblemOfTheDayWidget from '../components/ProblemOfTheDayWidget.jsx';
 
 const TABS = [
   { key: 'all',      label: 'All',      emoji: '🌐' },
@@ -659,6 +660,9 @@ export default function HubPage() {
 
           {/* ── Sidebar ── */}
           <aside className="hidden lg:flex flex-col gap-4 w-72 flex-shrink-0">
+            {/* POTD widget */}
+            <ProblemOfTheDayWidget />
+
             {/* Top Rankers widget */}
             <TopRankersSidebar />
 
