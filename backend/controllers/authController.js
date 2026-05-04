@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID');
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '9419506979-o8r2ggcfuebkrp6i6q0tnrksnahipv5o.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(CLIENT_ID);
 
 // Google Auth Login/Signup
 export const googleAuth = async (req, res) => {
@@ -16,7 +17,7 @@ export const googleAuth = async (req, res) => {
 
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID',
+      audience: CLIENT_ID,
     });
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, picture } = payload;
