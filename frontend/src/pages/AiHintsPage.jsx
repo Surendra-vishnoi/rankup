@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE } from '../apiConfig.js';
-import NotificationBell from '../components/NotificationBell.jsx';
+import Navbar from '../components/Navbar.jsx';
 
 export default function AiHintsPage() {
   const [problemUrl, setProblemUrl] = useState('');
@@ -73,24 +73,7 @@ export default function AiHintsPage() {
       </div>
 
       {/* Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center gap-4">
-          <a href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
-            <span className="font-extrabold text-base tracking-tight text-white">RankUp</span>
-          </a>
-          <div className="flex items-center gap-1 text-sm text-slate-500">
-            <span>/</span>
-            <span className="text-slate-300 font-semibold">AI Hints</span>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-            <a href="/settings" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-semibold">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              Settings
-            </a>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="relative z-10 flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         {!apiKey && (

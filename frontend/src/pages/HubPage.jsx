@@ -4,6 +4,7 @@ import CreatePostModal from '../components/CreatePostModal.jsx';
 import { API_BASE } from '../apiConfig';
 import NotificationBell from '../components/NotificationBell.jsx';
 import ProblemOfTheDayWidget from '../components/ProblemOfTheDayWidget.jsx';
+import Navbar from '../components/Navbar.jsx';
 
 const TABS = [
   { key: 'all',      label: 'All',      emoji: '🌐' },
@@ -453,14 +454,6 @@ export default function HubPage() {
     }
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-      window.location.reload();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -503,115 +496,18 @@ export default function HubPage() {
       </div>
 
       {/* ── Navbar ── */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="w-full px-6 lg:px-10 h-14 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">
-              R
-            </div>
-            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">
-              RankUp
-            </span>
-          </a>
-
-          {/* Search */}
-          <div className="flex-1 max-w-xs">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                className="w-full bg-bg-surface border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-accent/50 transition-colors"
-                type="search"
-                placeholder="Search posts…"
-                value={searchQuery}
-                onChange={e => setSearch(e.target.value)}
-                aria-label="Search posts"
-              />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {user && <NotificationBell />}
-            
-            {/* Recommender link */}
-            <a href="/recommender" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm whitespace-nowrap" title="Problem Recommender">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-              Problem Recommender
-            </a>
-
-            {/* AI Hints link */}
-            <a href="/ai-hints" className="text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden lg:flex items-center gap-1.5 text-sm whitespace-nowrap" title="AI Hints">
-              <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-              AI Hints
-            </a>
-
-            {/* Contests link */}
-            <a href="/contests" className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm" title="Contests Hub">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-              Contests
-            </a>
-            {/* Arena link */}
-            <a href="/arena" className="hidden sm:flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }} title="CodeArena">
-              ⚔️ Arena
-            </a>
-            {!user ? (
-              <a href="/auth" className="text-sm text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:block">
-                Log In
-              </a>
-            ) : !user.isVerified ? (
-              <a href="/verify" className="text-sm text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-400/5 transition-colors hidden sm:block font-semibold">
-                Verify CF
-              </a>
-            ) : (
-              <a
-                href="/editorials"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors"
-                style={{ color: '#eab308', background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}
-                title="Wing Editorials"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                Editorials
-              </a>
-            )}
-            {user?.isAdmin && (
-              <a href="/admin" className="text-purple-400 hover:text-purple-300 px-2.5 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors hidden sm:flex items-center gap-1.5 text-sm font-bold" title="Admin Console">
-                🛡️ Admin
-              </a>
-            )}
-            {user && (
-              <a href={`/profile/${user.username}`} className="text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:flex items-center gap-1.5 text-sm">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Profile
-              </a>
-            )}
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="text-red-400 hover:text-red-300 px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors hidden sm:flex items-center gap-1.5 text-sm font-semibold"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Logout
-              </button>
-            )}
-            <button
-              id="create-post-btn"
-              onClick={() => setShowModal(true)}
-              className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              New Post
-            </button>
-          </div>
-
-        </div>
-      </header>
+      <Navbar user={user} searchQuery={searchQuery} onSearchChange={setSearch}>
+        <button
+          id="create-post-btn"
+          onClick={() => setShowModal(true)}
+          className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New Post
+        </button>
+      </Navbar>
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="flex gap-8">
@@ -667,7 +563,7 @@ export default function HubPage() {
           {/* ── Sidebar ── */}
           <aside className="hidden lg:flex flex-col gap-4 w-72 flex-shrink-0">
             {/* POTD widget */}
-            <ProblemOfTheDayWidget />
+            <ProblemOfTheDayWidget user={user} />
 
             {/* Top Rankers widget */}
             <TopRankersSidebar />

@@ -3,6 +3,7 @@ import { API_BASE } from '../apiConfig';
 import GlobalSearch from '../components/GlobalSearch';
 import NotificationBell from '../components/NotificationBell';
 import MentionsTextarea from '../components/MentionsTextarea';
+import Navbar from '../components/Navbar';
 
 const ADMIN = 'Surendra_vishnoi';
 
@@ -468,14 +469,6 @@ export default function ContestsPage() {
       .catch(() => {});
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-      window.location.reload();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
 
   const fetchContests = () => {
     setLoading(true);
@@ -570,42 +563,7 @@ export default function ContestsPage() {
       </div>
 
       {/* Navbar */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-5">
-          <a href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn group-hover:scale-105 transition-transform">R</div>
-            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
-          </a>
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
-            <a href="/" className="hover:text-slate-200 transition-colors">Hub</a>
-            <span className="opacity-50">/</span>
-            <span className="text-slate-200">Contests</span>
-          </div>
-          <GlobalSearch />
-          <div className="ml-auto flex items-center gap-3">
-            {currentUser && <NotificationBell />}
-            {!currentUser && <a href="/auth" className="btn-primary text-sm px-5 py-2 font-bold shadow-btn">Login</a>}
-            {currentUser?.isAdmin && (
-              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 border border-transparent hover:border-purple-500/20 transition-all flex items-center gap-1.5 font-bold">
-                🛡️ Admin
-              </a>
-            )}
-            {currentUser && (
-              <a href={`/profile/${currentUser.username}`} className="text-sm font-bold text-slate-400 hover:text-slate-100 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
-                {currentUser.username}
-              </a>
-            )}
-            {currentUser && (
-              <button
-                onClick={handleLogout}
-                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-bold"
-              >
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar user={currentUser} middle={<GlobalSearch />} />
 
       <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-6 py-10">
         {/* Page Header */}

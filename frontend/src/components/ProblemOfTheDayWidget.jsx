@@ -21,11 +21,12 @@ function getDailyHash(date) {
   return Math.abs(hash);
 }
 
-export default function ProblemOfTheDayWidget() {
+export default function ProblemOfTheDayWidget({ user }) {
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [dayInfo, setDayInfo] = useState(null);
+  const [solved, setSolved] = useState(false);
 
   useEffect(() => {
     const today = new Date();
@@ -65,6 +66,24 @@ export default function ProblemOfTheDayWidget() {
         setLoading(false);
       });
   }, []);
+  
+  useEffect(() => {
+    if (!user?.cfHandle || !problem) return;
+
+    fetch(`https://codeforces.com/api/user.status?handle=${user.cfHandle}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'OK') {
+          const isSolved = data.result.some(sub => 
+            sub.verdict === 'OK' && 
+            sub.problem.contestId === problem.contestId && 
+            sub.problem.index === problem.index
+          );
+          setSolved(isSolved);
+        }
+      })
+      .catch(err => console.error("Error checking POTD status:", err));
+  }, [user, problem]);
 
   if (error || (!loading && !problem)) {
     return null; // hide widget on error
@@ -108,19 +127,28 @@ export default function ProblemOfTheDayWidget() {
             </span>
           </div>
           
-          <a
-            href={`https://codeforces.com/contest/${problem.contestId}/problem/${problem.index}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs rounded-lg transition-colors shadow-lg"
-          >
-            Solve Problem
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          </a>
+          {solved ? (
+            <div className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg border border-emerald-500/30">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Solved
+            </div>
+          ) : (
+            <a
+              href={`https://codeforces.com/contest/${problem.contestId}/problem/${problem.index}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs rounded-lg transition-colors shadow-lg"
+            >
+              Solve Problem
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+          )}
         </div>
       )}
     </div>

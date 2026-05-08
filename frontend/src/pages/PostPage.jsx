@@ -5,6 +5,7 @@ import { API_BASE } from '../apiConfig';
 import MentionsTextarea from '../components/MentionsTextarea';
 import GlobalSearch from '../components/GlobalSearch';
 import NotificationBell from '../components/NotificationBell';
+import Navbar from '../components/Navbar';
 
 const CATEGORY_META = {
   Insight: { label: 'Insight', emoji: '💡', color: 'text-yellow-400', border: 'border-yellow-500/40', bg: 'bg-yellow-400/10' },
@@ -123,14 +124,6 @@ export default function PostPage() {
       .catch(() => {});
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
 
   // Fetch post or editorial
   useEffect(() => {
@@ -271,42 +264,7 @@ export default function PostPage() {
       </div>
 
       {/* Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
-            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
-          </a>
-          <div className="flex items-center gap-1 text-sm text-slate-500">
-            <a href="/" className="hover:text-slate-200 transition-colors">Hub</a>
-            <span>/</span>
-            <span className="text-slate-300">{post.isEditorial ? 'Editorial' : 'Post'}</span>
-          </div>
-          <GlobalSearch />
-          <div className="ml-auto flex items-center gap-2">
-            {currentUser && <NotificationBell />}
-
-            <a href="/contests" className="text-slate-400 hover:text-slate-200 text-sm px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-              Contests
-            </a>
-            {currentUser?.isAdmin && (
-              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors flex items-center gap-1.5 font-bold">
-                🛡️ Admin
-              </a>
-            )}
-            {currentUser && (
-              <button
-                onClick={handleLogout}
-                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-semibold"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar user={currentUser} middle={<GlobalSearch />} />
 
       <main className="relative z-10 flex-1 max-w-3xl w-full mx-auto px-4 py-8">
         <button onClick={() => window.history.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
