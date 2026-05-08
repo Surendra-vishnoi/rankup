@@ -17,6 +17,7 @@ import contestRoutes from './routes/contests.js';
 import notificationRoutes from './routes/notifications.js';
 import chatRoutes from './routes/chat.js';
 import arenaRoutes from './routes/arena.js';
+import aiEditorialRoutes from './routes/aiEditorials.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
 import ArenaMatch from './models/ArenaMatch.js';
@@ -68,6 +69,7 @@ app.use('/api', contestRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api', arenaRoutes);
+app.use('/api/ai-editorials', aiEditorialRoutes);
 
 // ─── Socket.IO Auth Middleware ────────────────────────────────────────────────
 io.use((socket, next) => {

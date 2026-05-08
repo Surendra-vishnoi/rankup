@@ -12,6 +12,8 @@ import ContestsPage from './pages/ContestsPage.jsx';
 import PostPage from './pages/PostPage.jsx';
 import ArenaPage from './pages/ArenaPage.jsx';
 import RecommenderPage from './pages/RecommenderPage.jsx';
+import AiHintsPage from './pages/AiHintsPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
 import ChatPanel from './components/ChatPanel.jsx';
 import { API_BASE } from './apiConfig.js';
 
@@ -24,6 +26,8 @@ function Router() {
   if (path === '/editorials')        return <EditorialsPage />;
   if (path === '/contests')          return <ContestsPage />;
   if (path === '/recommender')       return <RecommenderPage />;
+  if (path === '/ai-hints')          return <AiHintsPage />;
+  if (path === '/settings')          return <SettingsPage />;
   if (path.startsWith('/profile/'))  return <ProfilePage />;
   if (path.startsWith('/post/') || path.startsWith('/editorial/')) return <PostPage />;
   if (path === '/arena')             return <ArenaPage />;
