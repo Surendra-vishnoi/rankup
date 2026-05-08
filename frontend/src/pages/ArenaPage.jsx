@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import MatchView from '../components/arena/MatchView.jsx';
 import { API_BASE } from '../apiConfig.js';
 import NotificationBell from '../components/NotificationBell.jsx';
+import Navbar from '../components/Navbar.jsx';
 
 const MATCH_TIMERS = [
   { label: '15 min', value: 15 },
@@ -139,10 +140,6 @@ export default function ArenaPage() {
     setState('result');
   };
 
-  const handleLogout = async () => {
-    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-    window.location.href = '/';
-  };
 
   // ── Live match view ─────────────────────────────────────────────────────────
   if (state === 'live' && matchData) {
@@ -211,31 +208,7 @@ export default function ArenaPage() {
       </div>
 
       {/* Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
-          <a href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
-            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
-          </a>
-
-          {/* Nav links */}
-          <nav className="flex items-center gap-1 text-sm">
-            <a href="/" className="text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">Hub</a>
-            <a href="/editorials" className="text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">Editorials</a>
-            <a href="/contests" className="text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">Contests</a>
-            <span className="text-slate-100 font-bold px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">⚔️ Arena</span>
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2">
-            {currentUser && <NotificationBell />}
-            {currentUser && (
-              <button onClick={handleLogout} className="text-slate-500 hover:text-red-400 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors font-semibold">
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar user={currentUser} />
 
       <main className="relative z-10 flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         {/* Result banner */}

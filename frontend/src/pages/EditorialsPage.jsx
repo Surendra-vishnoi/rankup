@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import MarkdownRenderer from '../components/MarkdownRenderer.jsx';
 import { cfRankColor } from '../utils/cfRank.js';
 import { API_BASE } from '../apiConfig';
+import Navbar from '../components/Navbar.jsx';
 
 /* ── Shared helpers ── */
 function timeAgo(dateStr) {
@@ -256,14 +257,6 @@ export default function EditorialsPage() {
       .catch(() => {});
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-      window.location.reload();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
 
   useEffect(() => {
     fetch(`${API_BASE}/api/editorials`, { credentials: 'include' })
@@ -302,60 +295,17 @@ export default function EditorialsPage() {
         }} />
       </div>
 
-      {/* ── Navbar ── */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl bg-bg-deep/80">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="RankUp Home">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-violet flex items-center justify-center text-sm font-extrabold text-white shadow-btn">R</div>
-            <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white to-accent-violet bg-clip-text text-transparent">RankUp</span>
-          </a>
-
-          {/* Search */}
-          <div className="flex-1 max-w-xs">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                className="w-full bg-bg-surface border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-amber-500/50 transition-colors"
-                type="search"
-                placeholder="Search editorials…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                aria-label="Search editorials"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <a href="/" className="text-sm text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors hidden sm:block">
-              ← Hub
-            </a>
-            {currentUser?.isAdmin && (
-              <a href="/admin" className="text-purple-400 hover:text-purple-300 text-sm px-3 py-1.5 rounded-lg hover:bg-purple-500/10 transition-colors flex items-center gap-1.5 font-bold">
-                🛡️ Admin
-              </a>
-            )}
-            {currentUser && (
-              <button
-                onClick={handleLogout}
-                className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-1.5 font-semibold"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Logout
-              </button>
-            )}
-            <a href="/create-editorial"
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors"
-              style={{ color:'#eab308', background:'rgba(234,179,8,0.08)', border:'1px solid rgba(234,179,8,0.2)' }}>
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Write Editorial
-            </a>
-          </div>
-        </div>
-      </header>
+      {/* Navbar */}
+      <Navbar user={currentUser} searchQuery={search} onSearchChange={setSearch} placeholder="Search editorials...">
+        <a href="/create-editorial"
+          className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors"
+          style={{ color:'#eab308', background:'rgba(234,179,8,0.08)', border:'1px solid rgba(234,179,8,0.2)' }}>
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Write Editorial
+        </a>
+      </Navbar>
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="flex gap-8">
