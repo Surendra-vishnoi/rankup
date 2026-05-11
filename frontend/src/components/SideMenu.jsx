@@ -7,11 +7,10 @@ import React from 'react';
 export default function SideMenu({ isOpen, onClose, user }) {
   const menuItems = [
     {
-      label: 'Main',
+      label: 'Competitive',
       items: [
-        { href: '/contributors', label: 'OG Contributors', icon: '🎨', color: 'bg-indigo-500/10', text: 'text-indigo-400' },
-        { href: '/hub', label: 'Feed Hub', icon: '🏠', color: 'bg-emerald-500/10', text: 'text-emerald-400' },
-        { href: '/editorials', label: 'Wing Editorials', icon: '📖', color: 'bg-amber-500/10', text: 'text-amber-400' },
+        { href: '/arena', label: 'CodeArena', icon: '⚔️', color: 'bg-red-500/10', text: 'text-red-500' },
+        { href: '/contests', label: 'Contests Hub', icon: '🏆', color: 'bg-yellow-500/10', text: 'text-yellow-500' },
       ]
     },
     {
@@ -22,10 +21,11 @@ export default function SideMenu({ isOpen, onClose, user }) {
       ]
     },
     {
-      label: 'Competitive',
+      label: 'Main',
       items: [
-        { href: '/arena', label: 'CodeArena', icon: '⚔️', color: 'bg-red-500/10', text: 'text-red-500' },
-        { href: '/contests', label: 'Contests Hub', icon: '🏆', color: 'bg-yellow-500/10', text: 'text-yellow-500' },
+        { href: '/contributors', label: 'OG Contributors', icon: '🎨', color: 'bg-indigo-500/10', text: 'text-indigo-400' },
+        { href: '/hub', label: 'Feed Hub', icon: '🏠', color: 'bg-emerald-500/10', text: 'text-emerald-400' },
+        { href: '/editorials', label: 'Wing Editorials', icon: '📖', color: 'bg-amber-500/10', text: 'text-amber-400' },
       ]
     },
     {

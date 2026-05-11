@@ -586,6 +586,9 @@ export default function HubPage() {
               </div>
             )}
 
+            {/* Problem of the Day */}
+            <ProblemOfTheDayWidget user={user} />
+
             {/* Quick Stats Minimal */}
             <div className="p-6 rounded-2xl border border-black/5 dark:border-white/10 bg-white/50 dark:bg-bg-surface/50 backdrop-blur-md shadow-sm">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
