@@ -10,7 +10,7 @@ export default function SideMenu({ isOpen, onClose, user }) {
       label: 'Main',
       items: [
         { href: '/contributors', label: 'OG Contributors', icon: '🎨', color: 'bg-indigo-500/10', text: 'text-indigo-400' },
-        { href: '/', label: 'Feed Hub', icon: '🏠', color: 'bg-emerald-500/10', text: 'text-emerald-400' },
+        { href: '/hub', label: 'Feed Hub', icon: '🏠', color: 'bg-emerald-500/10', text: 'text-emerald-400' },
         { href: '/editorials', label: 'Wing Editorials', icon: '📖', color: 'bg-amber-500/10', text: 'text-amber-400' },
       ]
     },

@@ -23,6 +23,23 @@ export const requireAuth = (req, res, next) => {
 };
 
 /**
+ * optionalAuth
+ * Reads the HttpOnly `token` cookie and attaches `req.user` if valid.
+ * Does NOT return 401 if missing or invalid, just continues.
+ */
+export const optionalAuth = (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    req.user = decoded;
+  } catch (err) {}
+  next();
+};
+
+
+/**
  * verifyWingMember
  * Must be used AFTER requireAuth (depends on req.user.id).
  * Fetches the user from DB and checks isWingMember === true.

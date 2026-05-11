@@ -253,7 +253,7 @@ function MyProfileWidget({ user }) {
   const color = rankColor(liveRank);
 
   return (
-    <div className="card p-4 border-slate-500/20 bg-gradient-to-br from-slate-500/5 to-slate-400/5">
+    <div className="p-6 rounded-2xl border border-black/5 dark:border-white/10 bg-white/50 dark:bg-bg-surface/50 shadow-sm backdrop-blur-md">
       <div className="flex items-center gap-2 mb-4">
         {/* Profile Avatar */}
         <div
@@ -269,7 +269,7 @@ function MyProfileWidget({ user }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
-            <span className="text-sm font-bold text-white truncate">{user?.username}</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.username}</span>
             {user?.isWingMember && (
               <svg className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/>
@@ -283,18 +283,18 @@ function MyProfileWidget({ user }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-bg-surface p-2 rounded text-center border border-white/5">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">Rating</p>
+        <div className="bg-white dark:bg-black/20 rounded-xl p-3 text-center shadow-sm dark:shadow-none border border-black/5 dark:border-white/5">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5 font-semibold">Rating</p>
           <p className="text-sm font-bold font-mono" style={{ color }}>{liveRating || '—'}</p>
         </div>
-        <div className="bg-bg-surface p-2 rounded text-center border border-white/5">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">Solved</p>
+        <div className="bg-white dark:bg-black/20 rounded-xl p-3 text-center shadow-sm dark:shadow-none border border-black/5 dark:border-white/5">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5 font-semibold">Solved</p>
           {loading ? (
-            <div className="h-5 w-10 mx-auto bg-white/10 rounded animate-pulse" />
+            <div className="h-5 w-10 mx-auto bg-black/10 dark:bg-white/10 rounded animate-pulse" />
           ) : error ? (
-            <p className="text-xs text-red-400 font-medium">Error</p>
+            <p className="text-xs text-red-500 dark:text-red-400 font-medium">Error</p>
           ) : (
-            <p className="text-sm font-bold text-white font-mono">{solvedCount}</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-white font-mono">{solvedCount}</p>
           )}
         </div>
       </div>
@@ -334,7 +334,7 @@ function TopRankersSidebar() {
   const displayList = data[listType].slice(0, 8);
 
   return (
-    <div className={`card p-4 transition-colors duration-300 ${isRankers ? 'border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-amber-400/5' : 'border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-400/5'}`}>
+    <div className={`p-6 transition-colors duration-300`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {isRankers ? (
@@ -365,15 +365,15 @@ function TopRankersSidebar() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="animate-pulse flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-white/10 flex-shrink-0" />
+            <div key={i} className="animate-pulse flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 flex-shrink-0" />
               <div className="flex-1">
-                <div className="h-2.5 w-20 bg-white/10 rounded mb-1" />
-                <div className="h-2 w-14 bg-white/[0.07] rounded" />
+                <div className="h-2.5 w-24 bg-black/10 dark:bg-white/10 rounded mb-1.5" />
+                <div className="h-2 w-16 bg-black/5 dark:bg-white/[0.07] rounded" />
               </div>
-              <div className="h-2.5 w-10 bg-white/10 rounded" />
+              <div className="h-2.5 w-10 bg-black/10 dark:bg-white/10 rounded" />
             </div>
           ))}
         </div>
@@ -408,7 +408,7 @@ function TopRankersSidebar() {
                 {/* Name + rank */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <a href={`/profile/${user.username}`} className="text-xs font-semibold text-slate-200 truncate hover:text-accent transition-colors">{user.username}</a>
+                    <a href={`/profile/${user.username}`} className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate hover:text-accent transition-colors">{user.username}</a>
                     {/* Wing tag removed as per request */}
                   </div>
                   <span className="text-[10px] capitalize" style={{ color }}>
@@ -487,11 +487,12 @@ export default function HubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-deep">
-      {/* ── Mesh background ── */}
-      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
+    <div className="min-h-screen bg-slate-50 dark:bg-bg-deep text-slate-900 dark:text-slate-200 transition-colors duration-300">
+      {/* ── Minimal Grid background ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] dark:opacity-[0.02]" aria-hidden>
         <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 80% 50% at 20% 0%, rgba(99,120,255,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(167,139,250,0.08) 0%, transparent 60%)'
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.5) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
         }} />
       </div>
 
@@ -500,45 +501,47 @@ export default function HubPage() {
         <button
           id="create-post-btn"
           onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2"
+          className="btn-primary flex items-center justify-center gap-1.5 text-sm p-2 sm:px-4 sm:py-2 rounded-lg"
+          aria-label="Create Post"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg className="w-5 h-5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          New Post
+          <span className="hidden sm:inline font-bold">Post</span>
         </button>
       </Navbar>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
+      <main className="relative z-10 max-w-[1200px] mx-auto px-6 py-10">
+        <div className="flex flex-col lg:flex-row gap-10">
+          
           {/* ── Feed column ── */}
           <div className="flex-1 min-w-0">
-            {/* Page title */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-100">
-                RankUp Hub
-              </h1>
-              <p className="text-slate-500 text-sm mt-1">
-                Insights, doubts, and discussions from the competitive programming community.
-              </p>
+            {/* Dashboard Header */}
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">
+                  Dashboard
+                </h1>
+                <p className="text-slate-500 text-sm mt-2 max-w-md leading-relaxed">
+                  Welcome to your developer hub. Access discussions, editorial insights, and track your coding activity.
+                </p>
+              </div>
             </div>
 
-            {/* ── Tabs ── */}
-            <div className="flex gap-1 p-1 bg-bg-card rounded-xl border border-white/[0.07] mb-6 overflow-x-auto" role="tablist">
+            {/* ── Clean Tabs ── */}
+            <div className="flex gap-2 mb-6 border-b border-black/5 dark:border-white/10 pb-4 overflow-x-auto scrollbar-hide">
               {TABS.map(tab => (
                 <button
                   key={tab.key}
                   id={`tab-${tab.key}`}
-                  role="tab"
-                  aria-selected={activeTab === tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-1 justify-center
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap
                     ${activeTab === tab.key
-                      ? 'bg-accent text-white shadow-btn'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-accent/10 dark:bg-accent/20 text-accent ring-1 ring-accent/30'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                 >
-                  <span>{tab.emoji}</span>
+                  <span className="opacity-70">{tab.emoji}</span>
                   {tab.label}
                 </button>
               ))}
@@ -560,75 +563,52 @@ export default function HubPage() {
             </div>
           </div>
 
-          {/* ── Sidebar ── */}
-          <aside className="hidden lg:flex flex-col gap-4 w-72 flex-shrink-0">
-            {/* POTD widget */}
-            <ProblemOfTheDayWidget user={user} />
+          {/* ── Clean Sidebar ── */}
+          <aside className="hidden lg:flex flex-col gap-6 w-[340px] flex-shrink-0">
+            
+            {/* My Profile Overview */}
+            {user ? (
+              <MyProfileWidget user={user} />
+            ) : (
+              <div className="p-6 rounded-2xl border border-accent/20 bg-accent/5 backdrop-blur-md">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" /></svg>
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Guest Access</h2>
+                    <p className="text-xs text-slate-500">Sign in to track progress</p>
+                  </div>
+                </div>
+                <a href="/auth" className="btn-primary w-full flex items-center justify-center py-2.5 text-sm rounded-xl">
+                  Login / Sign Up
+                </a>
+              </div>
+            )}
 
-            {/* Top Rankers widget */}
-            <TopRankersSidebar />
-
-            {/* Quick stats */}
-            <div className="card p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Community</h2>
-              <div className="grid grid-cols-2 gap-2">
+            {/* Quick Stats Minimal */}
+            <div className="p-6 rounded-2xl border border-black/5 dark:border-white/10 bg-white/50 dark:bg-bg-surface/50 backdrop-blur-md shadow-sm">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-accent animate-pulse" /> Live Activity
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Total Posts', value: posts.length },
-                  { label: 'Platform', value: 'Live' },
+                  { label: 'Active Posts', value: posts.length },
+                  { label: 'Network', value: 'Stable' },
                 ].map(s => (
-                  <div key={s.label} className="bg-bg-surface rounded-lg p-3 text-center border border-white/[0.05]">
-                    <div className="text-xl font-extrabold text-slate-100 font-mono">{s.value}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{s.label}</div>
+                  <div key={s.label} className="bg-white dark:bg-black/20 rounded-xl p-3 text-center shadow-sm dark:shadow-none border border-black/5 dark:border-white/5">
+                    <div className="text-xl font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight">{s.value}</div>
+                    <div className="text-[10px] uppercase font-semibold text-slate-500 mt-1">{s.label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Verify CTA or My Profile */}
-            {(!user || !user.isVerified) ? (
-              <div className="card p-4 border-accent/20 bg-gradient-to-br from-accent/5 to-accent-violet/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-accent-violet" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                  <h2 className="text-sm font-semibold text-slate-200">Verify your handle</h2>
-                </div>
-                <p className="text-xs text-slate-500 mb-3">
-                  Link your Codeforces account to display your rank on posts.
-                </p>
-                {!user ? (
-                  <a href="/auth" className="btn-primary text-xs w-full flex items-center justify-center py-2">
-                    Login / Sign Up
-                  </a>
-                ) : (
-                  <a href="/verify" className="w-full flex items-center justify-center py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-bg-deep font-extrabold text-xs shadow-gold transition-all duration-300">
-                    Verify CF Handle
-                  </a>
-                )}
-              </div>
-            ) : (
-              <MyProfileWidget user={user} />
-            )}
-
-            {/* Category guide */}
-            <div className="card p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Categories</h2>
-              <ul className="flex flex-col gap-2">
-                {[
-                  { emoji:'💡', name:'Insight',   color:'text-yellow-400', desc:'Insights & discoveries' },
-                  { emoji:'🐛', name:'Doubt', color:'text-red-400',    desc:'Help with a problem'    },
-                  { emoji:'☕', name:'General',   color:'text-emerald-400',desc:'General discussion'     },
-                ].map(c => (
-                  <li key={c.name} className="flex items-center gap-2.5 text-sm">
-                    <span className="text-base">{c.emoji}</span>
-                    <div>
-                      <span className={`font-semibold ${c.color}`}>{c.name}</span>
-                      <span className="text-slate-600 text-xs ml-1.5">— {c.desc}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+            {/* Top Rankers widget */}
+            <div className="rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 bg-white/50 dark:bg-bg-surface/50 shadow-sm">
+              <TopRankersSidebar />
             </div>
+
           </aside>
         </div>
       </main>

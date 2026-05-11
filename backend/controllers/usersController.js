@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+// import ProfileViewLog from '../models/ProfileViewLog.js';
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
 import Contest from '../models/Contest.js';
@@ -131,7 +132,7 @@ export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findOne({
       username: new RegExp(`^${req.params.username.trim()}$`, 'i'),
-    }).select('username cfHandle rank rating karma isWingMember isAdmin isCoordinator customTitle isVerified createdAt avatarUrl');
+    }).select('-password -__v -email -resetPasswordToken -resetPasswordExpire');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
@@ -152,7 +153,7 @@ export const getUserProfile = async (req, res) => {
       else if (c.topPerformers[2]?.toString() === user._id.toString()) bronze++;
     });
 
-    const isFollowing = req.user ? user.followers.includes(req.user.id) : false;
+    const isFollowing = req.user ? user.followers?.includes(req.user.id) : false;
 
     res.json({ 
       user, 
@@ -213,16 +214,20 @@ export const getUserActivity = async (req, res) => {
 // Authenticated user can update their profile (like avatarUrl)
 export const updateUserProfile = async (req, res) => {
   try {
-    const { avatarUrl } = req.body;
+    const { avatarUrl, socialLinks } = req.body;
     
-    // Simple validation: URL must start with http
-    if (avatarUrl && !avatarUrl.startsWith('http')) {
-      return res.status(400).json({ message: 'Avatar URL must start with http or https.' });
+    // Validation: URL must start with http or data:image (base64)
+    if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith('data:image/')) {
+      return res.status(400).json({ message: 'Avatar URL must start with http, https, or be a valid base64 image.' });
     }
+
+    const updateData = {};
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+    if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { $set: { avatarUrl: avatarUrl || '' } },
+      { $set: updateData },
       { new: true }
     ).select('-password');
 
@@ -314,5 +319,69 @@ export const unfollowUser = async (req, res) => {
   } catch (err) {
     console.error('unfollowUser error:', err);
     res.status(500).json({ message: 'Server error unfollowing user' });
+  }
+};
+
+// POST /api/users/streak
+// Authenticated — update the current user's daily login streak
+export const updateStreak = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    // Get today's date in UTC (year/month/day only — no time)
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    let streak = user.streakCount || 0;
+    let maxStreak = user.maxStreak || 0;
+    let updated = false;
+
+    if (!user.lastStreakDate) {
+      // First ever visit
+      streak = 1;
+      updated = true;
+    } else {
+      const last = new Date(user.lastStreakDate);
+      const lastUTC = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate()));
+      const diffDays = Math.round((todayUTC - lastUTC) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        // Already visited today — no change, just update lastActiveAt
+      } else if (diffDays === 1) {
+        // Consecutive day — increment streak
+        streak += 1;
+        updated = true;
+      } else {
+        // Missed day(s) — reset streak
+        streak = 1;
+        updated = true;
+      }
+    }
+
+    if (streak > maxStreak) maxStreak = streak;
+
+    const updatePayload = { lastActiveAt: now };
+    if (updated) {
+      updatePayload.streakCount = streak;
+      updatePayload.maxStreak = maxStreak;
+      updatePayload.lastStreakDate = todayUTC;
+    }
+
+    const dateString = now.toISOString().split('T')[0];
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { 
+        $set: updatePayload,
+        $addToSet: { activeDates: dateString } 
+      },
+      { new: true }
+    ).select('streakCount maxStreak lastStreakDate lastActiveAt activeDates');
+
+    res.json({ streakCount: updatedUser.streakCount, maxStreak: updatedUser.maxStreak, updated });
+  } catch (err) {
+    console.error('updateStreak error:', err);
+    res.status(500).json({ message: 'Server error updating streak' });
   }
 };
