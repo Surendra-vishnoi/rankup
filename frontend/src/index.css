@@ -24,8 +24,8 @@
     @apply bg-bg-deep text-slate-100 font-sans antialiased min-h-screen;
     /* Subtle noise texture for depth */
     background-image:
-      radial-gradient(ellipse 90% 55% at 18% 4%, rgba(99,102,241,0.09) 0%, transparent 58%),
-      radial-gradient(ellipse 65% 45% at 84% 96%, rgba(167,139,250,0.07) 0%, transparent 58%);
+      radial-gradient(ellipse 90% 55% at 18% 4%, rgba(16,185,129,0.09) 0%, transparent 58%),
+      radial-gradient(ellipse 65% 45% at 84% 96%, rgba(5,150,105,0.07) 0%, transparent 58%);
   }
 
   #root { @apply min-h-screen; }
@@ -44,7 +44,7 @@
 
   /* Focus ring — consistent across buttons/inputs */
   :focus-visible {
-    outline: 2px solid rgba(99,102,241,0.7);
+    outline: 2px solid rgba(16,185,129,0.7);
     outline-offset: 2px;
     border-radius: 6px;
   }

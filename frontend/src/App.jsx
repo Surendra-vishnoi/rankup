@@ -1,6 +1,7 @@
 import './index.css';
 import { useState, useEffect } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import LandingPage from './pages/LandingPage.jsx';
 import HubPage from './pages/HubPage.jsx';
 import VerifyPage from './pages/VerifyPage.jsx';
 import CreateEditorialPage from './pages/CreateEditorialPage.jsx';
@@ -15,11 +16,14 @@ import RecommenderPage from './pages/RecommenderPage.jsx';
 import AiHintsPage from './pages/AiHintsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ContributorsPage from './pages/ContributorsPage.jsx';
-import ChatPanel from './components/ChatPanel.jsx';
+import MessagesPage from './pages/MessagesPage.jsx';
+import FloatingMessageButton from './components/FloatingMessageButton.jsx';
 import { API_BASE } from './apiConfig.js';
 
-function Router() {
+function Router({ currentUser }) {
   const path = window.location.pathname;
+  if (path === '/')                  return <LandingPage currentUser={currentUser} />;
+  if (path === '/hub')               return <HubPage />;
   if (path === '/auth')              return <AuthPage />;
   if (path === '/admin')             return <AdminPage />;
   if (path === '/verify')            return <VerifyPage />;
@@ -33,6 +37,9 @@ function Router() {
   if (path.startsWith('/profile/'))  return <ProfilePage />;
   if (path.startsWith('/post/') || path.startsWith('/editorial/')) return <PostPage />;
   if (path === '/arena')             return <ArenaPage />;
+  if (path === '/messages')          return <MessagesPage />;
+  
+  // Fallback to hub page if not found (or could be 404)
   return <HubPage />;
 }
 
@@ -47,15 +54,16 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Don't show chat panel on auth page or arena
-  const showChat = currentUser && window.location.pathname !== '/auth' && window.location.pathname !== '/arena';
+  // Don't show floating button on landing, auth page, arena, or messages page itself
+  const path = window.location.pathname;
+  const showChatBtn = currentUser && path !== '/' && path !== '/auth' && path !== '/arena' && path !== '/messages';
 
   const clientId = '9419506979-o8r2ggcfuebkrp6i6q0tnrksnahipv5o.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <Router />
-      {showChat && <ChatPanel currentUser={currentUser} />}
+      <Router currentUser={currentUser} />
+      {showChatBtn && <FloatingMessageButton currentUser={currentUser} />}
     </GoogleOAuthProvider>
   );
 }

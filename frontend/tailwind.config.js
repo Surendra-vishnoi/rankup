@@ -21,11 +21,11 @@ export default {
           hover:   '#1e2740',
         },
 
-        /* ── Primary accent (indigo/violet) ── */
+        /* ── Primary accent (emerald/teal) ── */
         accent: {
-          DEFAULT: '#6366f1',   // Indigo-500
-          light:   '#818cf8',   // Indigo-400
-          violet:  '#a78bfa',   // Violet-400
+          DEFAULT: '#10b981',   // Emerald-500
+          light:   '#34d399',   // Emerald-400
+          violet:  '#059669',   // Emerald-600 (Reusing the violet key name so existing classes don't break, but making it green)
           cf:      '#f97316',   // Codeforces orange
         },
 
@@ -53,12 +53,12 @@ export default {
       },
 
       boxShadow: {
-        glow:          '0 0 40px rgba(99,102,241,0.18)',
-        'glow-sm':     '0 0 20px rgba(99,102,241,0.14)',
+        glow:          '0 0 40px rgba(16,185,129,0.18)',
+        'glow-sm':     '0 0 20px rgba(16,185,129,0.14)',
         card:          '0 4px 40px rgba(0,0,0,0.55)',
         'card-hover':  '0 8px 48px rgba(0,0,0,0.6)',
-        btn:           '0 4px 20px rgba(99,102,241,0.4)',
-        'btn-hover':   '0 8px 30px rgba(99,102,241,0.55)',
+        btn:           '0 4px 20px rgba(16,185,129,0.4)',
+        'btn-hover':   '0 8px 30px rgba(16,185,129,0.55)',
         'gold':        '0 0 16px rgba(234,179,8,0.15)',
         'gold-hover':  '0 0 24px rgba(234,179,8,0.25)',
         'inner-dark':  'inset 0 1px 0 rgba(255,255,255,0.05)',

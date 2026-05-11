@@ -76,6 +76,28 @@ const userSchema = new mongoose.Schema({
   arenaWins: { type: Number, default: 0 },
   arenaLosses: { type: Number, default: 0 },
   arenaDraws: { type: Number, default: 0 },
+
+  // Streak system
+  streakCount: { type: Number, default: 0 },
+  maxStreak: { type: Number, default: 0 },
+  lastStreakDate: { type: Date, default: null },
+
+  // Platform stats
+  contestsParticipated: { type: Number, default: 0 },
+  lastActiveAt: { type: Date, default: null },
+  activeDates: [{ type: String }], // 'YYYY-MM-DD'
+
+  // Bio & Social
+  bio: { type: String, default: '', trim: true },
+  socialLinks: {
+    github: { type: String, default: '' },
+    linkedin: { type: String, default: '' },
+    leetcode: { type: String, default: '' },
+    codeforces: { type: String, default: '' },
+    codechef: { type: String, default: '' },
+    portfolio: { type: String, default: '' },
+    other: { type: String, default: '' }
+  },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

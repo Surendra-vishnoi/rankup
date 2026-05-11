@@ -296,7 +296,7 @@ export default function AdminPage() {
         )}
         
         <div className="mt-8 pt-6 border-t border-white/5 text-center flex items-center justify-center gap-3">
-            <a href="/" className="text-sm font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-wider">← Return to Hub</a>
+            <a href="/hub" className="text-sm font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-wider">← Return to Hub</a>
         </div>
       </div>
     </div>
