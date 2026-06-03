@@ -51,6 +51,39 @@ export default function MatchView({ matchData, currentUser, socket, onMatchEnd }
   const [isRunning, setIsRunning]           = useState(false);
   const [opponentSubmitted, setOpponentSubmitted] = useState(false);
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+  const [externalStdin, setExternalStdin] = useState('');
+
+  // MathJax LaTeX rendering
+  useEffect(() => {
+    let script = document.getElementById('mathjax-script');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'mathjax-script';
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    window.MathJax = {
+      tex2jax: {
+        inlineMath: [['$$$','$$$']],
+        processEscapes: true
+      }
+    };
+
+    const typeset = () => {
+      if (window.MathJax && window.MathJax.Hub) {
+        window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub]);
+      }
+    };
+
+    script.addEventListener('load', typeset);
+    typeset();
+
+    return () => {
+      script.removeEventListener('load', typeset);
+    };
+  }, [problem]);
 
   // Listen for opponent submissions (just a status update)
   useEffect(() => {
@@ -88,7 +121,20 @@ export default function MatchView({ matchData, currentUser, socket, onMatchEnd }
     if (!socket || isSubmitting) return;
     setIsSubmitting(true);
     setSubmitStatus({ status: 'judging' });
-    socket.emit('arena:submit', { matchId, code, language });
+
+    // Copy code to clipboard and open Codeforces submission page
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        const cfSubmitUrl = `https://codeforces.com/problemset/submit?contestId=${problem.contestId}&problemIndex=${problem.index}`;
+        window.open(cfSubmitUrl, '_blank');
+        socket.emit('arena:submit', { matchId, code, language });
+      })
+      .catch(err => {
+        console.error('Clipboard copy failed, redirecting anyway:', err);
+        const cfSubmitUrl = `https://codeforces.com/problemset/submit?contestId=${problem.contestId}&problemIndex=${problem.index}`;
+        window.open(cfSubmitUrl, '_blank');
+        socket.emit('arena:submit', { matchId, code, language });
+      });
   };
 
   const handleForfeit = () => {
@@ -215,12 +261,12 @@ export default function MatchView({ matchData, currentUser, socket, onMatchEnd }
             {submitStatus.status === 'judging' ? (
               <>
                 <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                Judging your submission...
+                Checking Codeforces submissions... Code copied to clipboard! Paste (Ctrl+V) and submit on Codeforces.
               </>
             ) : submitStatus.isAC ? (
               <>✅ Accepted — Waiting for result...</>
             ) : (
-              <>{submitStatus.mock ? '🔧 Mock Mode' : '❌'} {submitStatus.verdict || 'Error'}</>
+              <>{submitStatus.mock ? '🔧 Mock Mode' : '❌'} {submitStatus.verdict || submitStatus.error || 'Error'}</>
             )}
           </div>
           {submitStatus.time && <span className="text-xs opacity-70">⏱ {submitStatus.time}s</span>}
@@ -231,57 +277,120 @@ export default function MatchView({ matchData, currentUser, socket, onMatchEnd }
       {/* ── Main split layout ── */}
       <div className="flex-1 flex overflow-hidden gap-3 p-3 min-h-0">
         {/* Problem Panel */}
-        <div className="problem-panel w-1/2 flex-shrink-0">
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <h1 className="text-base font-bold text-slate-100">
-                {problem?.contestId}{problem?.index}. {problem?.name}
-              </h1>
-            </div>
+        <div className="problem-panel w-1/2 flex-shrink-0 flex flex-col p-4 bg-bg-surface/30 border border-white/[0.08] rounded-2xl min-h-0">
+          <div className="mb-4 flex-shrink-0">
+            <h1 className="text-base font-bold text-slate-100 mb-1">
+              {problem?.contestId}{problem?.index}. {problem?.name}
+            </h1>
             <div className="flex items-center gap-2 flex-wrap">
               {problem?.rating && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold">
                   Difficulty: {problem.rating}
                 </span>
               )}
-              {(problem?.tags || []).slice(0, 4).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
-                  {tag}
-                </span>
-              ))}
             </div>
           </div>
 
-          <div className="border-t border-white/[0.06] pt-4 mb-4">
-            <p className="text-sm text-slate-300 leading-relaxed mb-4">
-              The full problem statement is available on Codeforces. Click the link below to read it in a new tab.
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 mb-4 text-xs flex-shrink-0">
+            <span className="font-bold text-amber-400 block mb-1">💡 CodeArena Submission Guide</span>
+            <p className="text-slate-300 leading-relaxed">
+              To solve the problem, write and compile your solution locally if needed, but <strong>you must submit the code directly on Codeforces</strong> under your verified handle (click the link below to open).
+              After submitting on Codeforces, click the <strong>"Submit Solution"</strong> button in our editor. RankUp will check your Codeforces submissions status automatically!
             </p>
-            <a
-              href={problem?.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-sm hover:bg-amber-500/20 transition-all"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-              </svg>
-              Open Problem on Codeforces ↗
-            </a>
           </div>
 
-          {/* Embedded iframe attempt */}
-          <div className="border border-white/[0.06] rounded-xl overflow-hidden" style={{ height: '400px' }}>
-            <iframe
-              src={problem?.link ? `${problem.link.replace('https://codeforces.com', 'https://codeforces.com')}` : ''}
-              className="w-full h-full"
-              title="Problem Statement"
-              sandbox="allow-same-origin allow-scripts"
-              style={{ background: '#fff', border: 'none' }}
-            />
+          {/* Scrollable Problem Statement Container */}
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4" style={{ maxHeight: 'calc(100vh - 240px)' }}>
+            {problem?.descriptionHtml ? (
+              <div className="space-y-5">
+                {/* Description */}
+                <div 
+                  className="cf-description text-sm text-slate-300 leading-relaxed font-sans"
+                  dangerouslySetInnerHTML={{ __html: problem.descriptionHtml }}
+                />
+
+                {/* Input Specs */}
+                {problem.inputSpecHtml && (
+                  <div className="border-t border-white/[0.06] pt-4">
+                    <h3 className="text-sm font-bold text-slate-200 mb-2">Input</h3>
+                    <div 
+                      className="cf-input-spec text-sm text-slate-300 leading-relaxed font-sans"
+                      dangerouslySetInnerHTML={{ __html: problem.inputSpecHtml }}
+                    />
+                  </div>
+                )}
+
+                {/* Output Specs */}
+                {problem.outputSpecHtml && (
+                  <div className="border-t border-white/[0.06] pt-4">
+                    <h3 className="text-sm font-bold text-slate-200 mb-2">Output</h3>
+                    <div 
+                      className="cf-output-spec text-sm text-slate-300 leading-relaxed font-sans"
+                      dangerouslySetInnerHTML={{ __html: problem.outputSpecHtml }}
+                    />
+                  </div>
+                )}
+
+                {/* Sample Testcases */}
+                {problem.sampleTests && problem.sampleTests.length > 0 && (
+                  <div className="border-t border-white/[0.06] pt-4 space-y-3">
+                    <h3 className="text-sm font-bold text-slate-200">Sample Tests</h3>
+                    <div className="space-y-3">
+                      {problem.sampleTests.map((test, idx) => (
+                        <div key={idx} className="bg-black/20 border border-white/5 rounded-xl p-3 text-xs font-mono">
+                          <div className="flex justify-between items-center mb-1 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                            <span>Input Case #{idx + 1}</span>
+                            <button
+                              onClick={() => {
+                                setExternalStdin(test.input + (test.input.endsWith('\n') ? '' : '\n') + ` `);
+                                setTimeout(() => setExternalStdin(test.input), 50);
+                              }}
+                              className="px-2 py-0.5 rounded bg-accent/20 border border-accent/30 text-accent font-bold hover:bg-accent/30 transition-all"
+                            >
+                              Run this test
+                            </button>
+                          </div>
+                          <pre className="text-slate-300 whitespace-pre-wrap p-2 bg-black/10 rounded border border-white/[0.02] mb-3">{test.input}</pre>
+                          
+                          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Expected Output</div>
+                          <pre className="text-emerald-400 whitespace-pre-wrap p-2 bg-black/10 rounded border border-white/[0.02]">{test.output}</pre>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Note */}
+                {problem.noteHtml && (
+                  <div className="border-t border-white/[0.06] pt-4">
+                    <h3 className="text-sm font-bold text-slate-200 mb-2">Note</h3>
+                    <div 
+                      className="cf-note text-sm text-slate-300 leading-relaxed font-sans"
+                      dangerouslySetInnerHTML={{ __html: problem.noteHtml }}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-slate-400 italic text-sm">
+                Problem statement content not available. Please use the link below to view it on Codeforces.
+              </div>
+            )}
+
+            <div className="border-t border-white/[0.06] pt-4">
+              <a
+                href={problem?.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-sm hover:bg-amber-500/20 transition-all w-full justify-center"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+                </svg>
+                View full problem page on Codeforces ↗
+              </a>
+            </div>
           </div>
-          <p className="text-xs text-slate-600 mt-2 text-center">
-            If the iframe is blocked by CORS, use the "Open on Codeforces" link above.
-          </p>
         </div>
 
         {/* Code Editor */}
@@ -292,6 +401,7 @@ export default function MatchView({ matchData, currentUser, socket, onMatchEnd }
             isSubmitting={isSubmitting}
             isRunning={isRunning}
             disabled={timer.expired || !!submitStatus?.isAC}
+            externalStdin={externalStdin}
           />
         </div>
       </div>

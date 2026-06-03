@@ -18,6 +18,7 @@ export default function SideMenu({ isOpen, onClose, user }) {
       items: [
         { href: '/recommender', label: 'Problem Recommender', icon: '🎯', color: 'bg-blue-500/10', text: 'text-blue-400' },
         { href: '/ai-hints', label: 'AI Editorials', icon: '🔮', color: 'bg-accent/10', text: 'text-accent' },
+        { href: '/playground', label: 'Code Playground', icon: '💻', color: 'bg-emerald-500/10', text: 'text-emerald-400' },
       ]
     },
     {

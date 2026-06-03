@@ -1,6 +1,8 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -108,6 +110,72 @@ async function fetchCFProblems() {
   return cfProblemCache || [];
 }
 
+async function fetchCFProblemDetails(contestId, index) {
+  try {
+    const url = `https://codeforces.com/problemset/problem/${contestId}/${index}`;
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.5 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    const $ = cheerio.load(res.data);
+    const problemStatement = $('.problem-statement');
+    if (!problemStatement.length) return null;
+
+    const descriptionHtml = problemStatement.find('.header').next('div').html() || '';
+    const inputSpecHtml = problemStatement.find('.input-specification').html() || '';
+    const outputSpecHtml = problemStatement.find('.output-specification').html() || '';
+    const noteHtml = problemStatement.find('.note').html() || '';
+
+    const inputs = [];
+    const outputs = [];
+    
+    problemStatement.find('.sample-test .input pre').each((i, el) => {
+      let text = '';
+      const lines = $(el).find('.test-case-line');
+      if (lines.length) {
+        text = lines.map((_, line) => $(line).text()).get().join('\n');
+      } else {
+        let html = $(el).html() || '';
+        text = html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+      }
+      inputs.push(text.trim());
+    });
+    
+    problemStatement.find('.sample-test .output pre').each((i, el) => {
+      let text = '';
+      const lines = $(el).find('.test-case-line');
+      if (lines.length) {
+        text = lines.map((_, line) => $(line).text()).get().join('\n');
+      } else {
+        let html = $(el).html() || '';
+        text = html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
+      }
+      outputs.push(text.trim());
+    });
+
+    const sampleTests = [];
+    for (let i = 0; i < inputs.length; i++) {
+      sampleTests.push({
+        input: inputs[i] || '',
+        output: outputs[i] || ''
+      });
+    }
+
+    return {
+      descriptionHtml,
+      inputSpecHtml,
+      outputSpecHtml,
+      noteHtml,
+      sampleTests
+    };
+  } catch (err) {
+    console.error('[CF Scraper] Failed to scrape problem details:', err.message);
+    return null;
+  }
+}
+
 /**
  * Fetch a CF problem that neither user has solved.
  * Difficulty target = minimum CF rating of both users (±200 buffer).
@@ -123,7 +191,7 @@ async function selectProblem(user1Rating, user2Rating) {
   );
 
   if (!candidates.length) {
-    // Fallback to a well-known easy problem
+    const details = await fetchCFProblemDetails(1, 'A');
     return {
       contestId: 1,
       index: 'A',
@@ -131,10 +199,17 @@ async function selectProblem(user1Rating, user2Rating) {
       rating: 1000,
       tags: ['math'],
       link: 'https://codeforces.com/problemset/problem/1/A',
+      descriptionHtml: details?.descriptionHtml || '',
+      inputSpecHtml: details?.inputSpecHtml || '',
+      outputSpecHtml: details?.outputSpecHtml || '',
+      noteHtml: details?.noteHtml || '',
+      sampleTests: details?.sampleTests || []
     };
   }
 
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  const details = await fetchCFProblemDetails(pick.contestId, pick.index);
+
   return {
     contestId: pick.contestId,
     index: pick.index,
@@ -142,6 +217,11 @@ async function selectProblem(user1Rating, user2Rating) {
     rating: pick.rating,
     tags: pick.tags || [],
     link: `https://codeforces.com/problemset/problem/${pick.contestId}/${pick.index}`,
+    descriptionHtml: details?.descriptionHtml || '',
+    inputSpecHtml: details?.inputSpecHtml || '',
+    outputSpecHtml: details?.outputSpecHtml || '',
+    noteHtml: details?.noteHtml || '',
+    sampleTests: details?.sampleTests || []
   };
 }
 
@@ -329,8 +409,8 @@ async function finishMatch(matchId, winnerId, loserId) {
 }
 
 // ─── Judge0 submission helper ─────────────────────────────────────────────────
-const JUDGE0_HOST = process.env.JUDGE0_HOST || 'judge0-ce.p.rapidapi.com';
-const JUDGE0_KEY  = process.env.JUDGE0_RAPIDAPI_KEY || 'PLACEHOLDER_ADD_YOUR_RAPIDAPI_KEY';
+const JUDGE0_URL = process.env.JUDGE0_URL || 'https://ce.judge0.com';
+const JUDGE0_KEY = process.env.JUDGE0_API_KEY || '7f955470-b1aa-11ed-a590-7164eb066d76';
 
 const JUDGE0_LANG_IDS = {
   cpp:        54,   // C++17
@@ -341,17 +421,13 @@ const JUDGE0_LANG_IDS = {
 };
 
 async function judgeCode(sourceCode, language, stdin = '') {
-  if (JUDGE0_KEY === 'PLACEHOLDER_ADD_YOUR_RAPIDAPI_KEY') {
-    return { status: { id: 4, description: 'Wrong Answer' }, stdout: '', stderr: '[Mock] No Judge0 key configured.', time: '0', memory: 0, mock: true };
-  }
   const langId = JUDGE0_LANG_IDS[language] || 54;
   try {
-    const res = await fetch(`https://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`, {
+    const res = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-RapidAPI-Host': JUDGE0_HOST,
-        'X-RapidAPI-Key': JUDGE0_KEY,
+        'X-Auth-Token': JUDGE0_KEY,
       },
       body: JSON.stringify({ source_code: sourceCode, language_id: langId, stdin }),
     });
@@ -359,6 +435,62 @@ async function judgeCode(sourceCode, language, stdin = '') {
   } catch (err) {
     console.error('[Judge0] Error:', err.message);
     return { status: { id: 13, description: 'Internal Error' }, stdout: '', stderr: err.message };
+  }
+}
+
+// ─── Codeforces submission helper ─────────────────────────────────────────────
+async function checkCFSubmission(cfHandle, contestId, index, matchStartTime) {
+  try {
+    const url = `https://codeforces.com/api/user.status?handle=${encodeURIComponent(cfHandle)}&from=1&count=10`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Codeforces API returned status ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.status !== 'OK') {
+      throw new Error(data.comment || 'Failed to fetch status from Codeforces');
+    }
+
+    const submissions = data.result;
+    const matchStartSeconds = Math.floor(matchStartTime.getTime() / 1000) - 30; // 30-sec buffer
+
+    const relevantSubmissions = submissions.filter(sub => 
+      sub.problem.contestId === contestId &&
+      sub.problem.index === index &&
+      sub.creationTimeSeconds >= matchStartSeconds
+    );
+
+    if (relevantSubmissions.length === 0) {
+      return { found: false };
+    }
+
+    const latest = relevantSubmissions[0];
+    return {
+      found: true,
+      verdict: latest.verdict,
+      timeConsumedMillis: latest.timeConsumedMillis,
+      memoryConsumedBytes: latest.memoryConsumedBytes,
+      id: latest.id
+    };
+  } catch (err) {
+    console.error('[Arena CF Check] Error:', err.message);
+    throw err;
+  }
+}
+
+function mapCFVerdict(verdict) {
+  if (!verdict) return 'Testing...';
+  switch (verdict) {
+    case 'OK': return 'AC';
+    case 'WRONG_ANSWER': return 'Wrong Answer';
+    case 'TIME_LIMIT_EXCEEDED': return 'Time Limit Exceeded';
+    case 'MEMORY_LIMIT_EXCEEDED': return 'Memory Limit Exceeded';
+    case 'RUNTIME_ERROR': return 'Runtime Error';
+    case 'COMPILATION_ERROR': return 'Compilation Error';
+    case 'CHALLENGED': return 'Challenged / Hacked';
+    case 'SKIPPED': return 'Skipped';
+    case 'TESTING': return 'Testing...';
+    default: return verdict;
   }
 }
 
@@ -396,8 +528,13 @@ io.on('connection', async (socket) => {
     try {
       if (arenaQueue.has(socket.userId)) return; // already queued
 
-      const user = await User.findById(socket.userId).select('username arenaElo rating');
+      const user = await User.findById(socket.userId).select('username arenaElo rating isVerified cfHandle');
       if (!user) return;
+
+      if (!user.isVerified || !user.cfHandle) {
+        socket.emit('arena:queued_error', { message: 'You must verify your Codeforces handle to join the CodeArena!' });
+        return;
+      }
 
       arenaQueue.set(socket.userId, {
         socket,
@@ -436,34 +573,45 @@ io.on('connection', async (socket) => {
       const isUser2 = match.user2.toString() === socket.userId;
       if (!isUser1 && !isUser2) return;
 
-      socket.emit('arena:submit_result', { status: 'judging', message: 'Submitting to judge...' });
+      socket.emit('arena:submit_result', { status: 'judging', message: 'Checking Codeforces submissions...' });
 
-      const result = await judgeCode(code, language);
-      const verdict = result.status?.description || 'Unknown';
-      const isAC    = result.status?.id === 3; // Accepted
+      // Fetch user's CF handle
+      const user = await User.findById(socket.userId).select('cfHandle isVerified');
+      if (!user || !user.isVerified || !user.cfHandle) {
+        return socket.emit('arena:submit_result', { error: 'Please verify your Codeforces handle first!' });
+      }
+
+      const cfResult = await checkCFSubmission(user.cfHandle, match.problem.contestId, match.problem.index, match.startTime);
+      if (!cfResult.found) {
+        return socket.emit('arena:submit_result', { 
+          error: `No recent Codeforces submission found for problem ${match.problem.contestId}${match.problem.index}. Please submit your code directly on Codeforces first, then try again!` 
+        });
+      }
+
+      const verdict = cfResult.verdict;
+      const isAC = verdict === 'OK';
 
       // Save submission
       match.submissions.push({
         user: socket.userId,
         code,
         language,
-        verdict: isAC ? 'AC' : verdict,
+        verdict: isAC ? 'AC' : mapCFVerdict(verdict),
         submittedAt: new Date(),
-        stdout: result.stdout || '',
-        stderr: result.stderr || '',
-        time: result.time || '',
-        memory: result.memory || 0,
+        stdout: `Codeforces Submission ID: ${cfResult.id}\nVerdict: ${verdict}`,
+        stderr: '',
+        time: cfResult.timeConsumedMillis ? (cfResult.timeConsumedMillis / 1000).toString() : '0',
+        memory: cfResult.memoryConsumedBytes || 0,
       });
       await match.save();
 
       socket.emit('arena:submit_result', {
-        verdict: isAC ? 'AC' : verdict,
-        stdout: result.stdout,
-        stderr: result.stderr,
-        time: result.time,
-        memory: result.memory,
+        verdict: isAC ? 'AC' : mapCFVerdict(verdict),
+        stdout: `Codeforces Submission ID: ${cfResult.id}\nVerdict: ${verdict}`,
+        stderr: '',
+        time: cfResult.timeConsumedMillis ? (cfResult.timeConsumedMillis / 1000).toString() : '0',
+        memory: cfResult.memoryConsumedBytes || 0,
         isAC,
-        mock: result.mock || false,
       });
 
       if (isAC) {
@@ -472,7 +620,7 @@ io.on('connection', async (socket) => {
       }
     } catch (err) {
       console.error('[Arena] submit error:', err);
-      socket.emit('arena:submit_result', { error: 'Server error during submission.' });
+      socket.emit('arena:submit_result', { error: 'Server error during submission verification.' });
     }
   });
 

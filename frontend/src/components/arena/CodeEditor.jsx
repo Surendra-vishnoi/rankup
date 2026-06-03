@@ -8,13 +8,21 @@ const LANGUAGES = [
   { id: 'javascript', label: 'JavaScript', judge0Id: 63, placeholder: 'const lines = require("fs").readFileSync("/dev/stdin","utf8").trim().split("\\n");\n// your solution\n' },
 ];
 
-export default function CodeEditor({ onRun, onSubmit, isSubmitting, isRunning, disabled }) {
+export default function CodeEditor({ onRun, onSubmit, isSubmitting, isRunning, disabled, externalStdin }) {
   const [language, setLanguage]   = useState(LANGUAGES[0]);
   const [code, setCode]           = useState(LANGUAGES[0].placeholder);
   const [stdin, setStdin]         = useState('');
   const [runOutput, setRunOutput] = useState(null);
   const [showIO, setShowIO]       = useState(false);
   const textareaRef               = useRef(null);
+
+  // Sync external stdin
+  useEffect(() => {
+    if (externalStdin !== undefined && externalStdin !== null) {
+      setStdin(externalStdin);
+      setShowIO(true);
+    }
+  }, [externalStdin]);
 
   // Change language → reset to placeholder
   const handleLangChange = (langId) => {

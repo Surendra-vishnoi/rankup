@@ -103,6 +103,12 @@ export default function ArenaPage() {
       setState('live');
     });
 
+    socket.on('arena:queued_error', (data) => {
+      alert(data.message || 'Matchmaking error');
+      setState('lobby');
+      clearInterval(queueTimerRef.current);
+    });
+
     socket.on('arena:result', (data) => {
       setResultData(data);
       setState('result');
@@ -297,8 +303,8 @@ export default function ArenaPage() {
 
                   <button
                     onClick={handleJoinQueue}
-                    disabled={!currentUser}
-                    className="w-full btn-primary py-3 text-base font-bold flex items-center justify-center gap-2"
+                    disabled={!currentUser || !currentUser.isVerified}
+                    className="w-full btn-primary py-3 text-base font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5zM9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5zM10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5zM14 14.5c0 .83.67 1.5 1.5 1.5h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-5c-.83 0-1.5.67-1.5 1.5z"/>
@@ -306,11 +312,20 @@ export default function ArenaPage() {
                     Find Opponent
                   </button>
 
-                  {!currentUser && (
+                  {!currentUser ? (
                     <p className="text-xs text-slate-500 text-center mt-3">
                       <a href="/auth" className="text-accent hover:underline font-semibold">Log in</a> to join the arena.
                     </p>
-                  )}
+                  ) : !currentUser.isVerified ? (
+                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
+                      <p className="text-xs text-red-400 font-semibold leading-relaxed">
+                        ⚠️ Codeforces verification required!
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Please <a href="/verify" className="text-accent hover:underline font-bold">verify your Codeforces handle</a> to enable matchmaking.
+                      </p>
+                    </div>
+                  ) : null}
                 </>
               )}
             </div>

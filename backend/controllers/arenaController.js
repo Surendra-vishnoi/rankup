@@ -68,34 +68,21 @@ export const getMatch = async (req, res) => {
  * Body: { source_code, language_id, stdin }
  */
 export const executeCode = async (req, res) => {
-  const JUDGE0_HOST = process.env.JUDGE0_HOST || 'judge0-ce.p.rapidapi.com';
-  const JUDGE0_KEY  = process.env.JUDGE0_RAPIDAPI_KEY || 'PLACEHOLDER_ADD_YOUR_RAPIDAPI_KEY';
+  const JUDGE0_URL = process.env.JUDGE0_URL || 'https://ce.judge0.com';
+  const JUDGE0_KEY = process.env.JUDGE0_API_KEY || '7f955470-b1aa-11ed-a590-7164eb066d76';
 
   const { source_code, language_id, stdin } = req.body;
   if (!source_code || !language_id) {
     return res.status(400).json({ message: 'source_code and language_id are required.' });
   }
 
-  if (JUDGE0_KEY === 'PLACEHOLDER_ADD_YOUR_RAPIDAPI_KEY') {
-    // Return a mock response so the UI works without a real key
-    return res.json({
-      mock: true,
-      stdout: '[Mock Run] Code received. Add JUDGE0_RAPIDAPI_KEY to backend .env to enable real execution.\n',
-      stderr: '',
-      status: { id: 3, description: 'Accepted' },
-      time: '0.001',
-      memory: 1024,
-    });
-  }
-
   try {
     // Step 1: Submit to Judge0
-    const submitRes = await fetch(`https://${JUDGE0_HOST}/submissions?base64_encoded=false&wait=true`, {
+    const submitRes = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-RapidAPI-Host': JUDGE0_HOST,
-        'X-RapidAPI-Key': JUDGE0_KEY,
+        'X-Auth-Token': JUDGE0_KEY,
       },
       body: JSON.stringify({
         source_code,

@@ -17,6 +17,7 @@ import AiHintsPage from './pages/AiHintsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import ContributorsPage from './pages/ContributorsPage.jsx';
 import MessagesPage from './pages/MessagesPage.jsx';
+import PlaygroundPage from './pages/PlaygroundPage.jsx';
 import FloatingMessageButton from './components/FloatingMessageButton.jsx';
 import { API_BASE } from './apiConfig.js';
 
@@ -32,6 +33,7 @@ function Router({ currentUser }) {
   if (path === '/contests')          return <ContestsPage />;
   if (path === '/recommender')       return <RecommenderPage />;
   if (path === '/ai-hints')          return <AiHintsPage />;
+  if (path === '/playground')        return <PlaygroundPage />;
   if (path === '/settings')          return <SettingsPage />;
   if (path === '/contributors')      return <ContributorsPage />;
   if (path.startsWith('/profile/'))  return <ProfilePage />;
