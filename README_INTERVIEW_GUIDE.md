@@ -1,6 +1,6 @@
 # RankUp Interview Preparation & Comprehensive Architecture Guide
 
-This document is a professional-grade technical reference manual for **RankUp**, a real-time gamified social practiced hub for competitive programming enthusiasts. This guide is specifically structured to prepare you for software engineering interviews (internships, placements, and senior roles), with a core emphasis on the **CodeArena** module, which you personally designed and architected.
+This document is a professional-grade technical reference manual and interview preparation guide for **RankUp**, a real-time gamified practicing and social platform designed for competitive programming enthusiasts. This guide is structured to help you explain the **entire** project codebase and architecture confidently during software engineering interviews (internships, placements, and senior roles), detailing the work of the team as well as your own contributions.
 
 ---
 
@@ -277,6 +277,10 @@ rankup/
 │   ├── controllers/            # Controller layer separating business logic from routes
 │   │   ├── arenaController.js  # Manages match history, leaderboard, and Judge0 code execution
 │   │   ├── authController.js   # Handles registration, login, and token generation
+│   │   ├── chatController.js   # Handles conversation aggregation and message logs
+│   │   ├── commentController.js# Handles forum and editorial nested comments
+│   │   ├── contestController.js# Handles contest schedules and linked post references
+│   │   ├── postController.js   # Wrote discussion postings, upvotes, and reputation counts
 │   │   └── verifyController.js # Integrates Codeforces handle verification using compile errors
 │   ├── jobs/                   # Automated background cron jobs
 │   │   └── syncCfRatings.js    # Synchronizes user ratings with the Codeforces API
@@ -284,8 +288,13 @@ rankup/
 │   │   └── auth.js             # Verifies JWTs and attaches user payload
 │   ├── models/                 # Mongoose models defining MongoDB collections
 │   │   ├── ArenaMatch.js       # Model for CodeArena matches and submissions
+│   │   ├── Comment.js          # Model for discussion thread comments
+│   │   ├── Contest.js          # Model for contest data sheets and references
+│   │   ├── Message.js          # Model for direct chat messages
+│   │   ├── Notification.js     # Model for user mentions, follows, and announcements
 │   │   └── User.js             # Model for user profiles, credentials, and Elo ratings
 │   ├── routes/                 # Express routes mapping HTTP endpoints to controllers
+│   │   ├── aiEditorials.js     # Generates progressive editorial hints using Gemini API
 │   │   ├── arena.js            # Routes for leaderboards, histories, and execution
 │   │   └── auth.js             # Routes for login and authentication
 │   ├── utils/                  # Shared helper files
@@ -300,7 +309,10 @@ rankup/
         │       └── MatchView.jsx  # Main match screen containing scraped problem statement and timer
         ├── pages/              # Primary SPA pages
         │   ├── ArenaPage.jsx   # Matchmaking lobby, queue manager, and leaderboard
-        │   └── PlaygroundPage.jsx # Sandbox code playground
+        │   ├── HubPage.jsx     # Main social media discussions feed page
+        │   ├── MessagesPage.jsx# Live chat conversations dashboard
+        │   ├── PlaygroundPage.jsx # Sandbox code playground
+        │   └── VerifyPage.jsx  # Codeforces handle verification wizard
         ├── App.jsx             # React application entrypoint and router
         └── main.jsx            # Mounts the React app to the DOM
 ```
@@ -329,6 +341,15 @@ rankup/
     *   `matchId` (Unique, indexing: true)
 *   **Schema Details**:
     *   `submissions` contains nested `submissionSchema` documents, storing the code, language, and execution results for every compile or submission attempt.
+
+### Post Collection (`models/Post.js`)
+*   **Purpose**: Stores discussion feed postings, announcements, and Wing Editorials.
+*   **Indexes**:
+    *   `author` index for fast profile feed rendering.
+*   **Fields**:
+    *   `isEditorial` (Boolean): Identifies if the post is a CP Wing Editorial.
+    *   `hints` (Array of Strings): Contains collapsible, progressive hints.
+    *   `solution` (String): Contains solution code and markdown walkthroughs.
 
 ### Message Collection (`models/Message.js`)
 *   **Purpose**: Stores direct messages exchanged between users.
@@ -363,25 +384,49 @@ rankup/
       }
     }
     ```
-*   **Internal Logic**:
-    1. Reads `source_code`, `language_id`, and `stdin` from the request.
-    2. Packages the payload and forwards it to the Judge0 CE compiler (`https://ce.judge0.com/submissions`).
-    3. Attaches the `X-Auth-Token` header containing the Judge0 API key.
-    4. Waits for the execution output and returns the formatted response.
 
-### 2. Fetch Leaderboard
-*   **Route**: `GET /api/arena/leaderboard`
-*   **Authentication**: None.
+### 2. Generate AI Progressive Hints
+*   **Route**: `POST /api/ai-editorials/generate-hints`
+*   **Authentication**: Required (JWT cookie verified by `requireAuth` middleware).
+*   **Request Body**:
+    ```json
+    {
+      "problemUrl": "https://codeforces.com/problemset/problem/1/A",
+      "apiKey": "gemini_api_key"
+    }
+    ```
 *   **Response (200 OK)**:
     ```json
-    [
-      {
-        "username": "Surendra_vishnoi",
-        "arenaElo": 1420,
-        "arenaWins": 15,
-        "arenaLosses": 2
-      }
-    ]
+    {
+      "directionToThink": "Focus on mathematical divisions and scaling math values.",
+      "hints": [
+        { "hint": "Consider the size of the square flagstones compared to the total grid.", "catch": "Do not use float divisions." }
+      ],
+      "editorial": [
+        { "title": "Approach", "content": "Calculate the ceiling division of the width and height." }
+      ],
+      "solutionCode": "...",
+      "solutionExplanation": "Short explanation of how the code works."
+    }
+    ```
+
+### 3. Verify Codeforces Handle
+*   **Route**: `POST /api/verify/handle`
+*   **Authentication**: Required.
+*   **Request Body**:
+    ```json
+    {
+      "username": " Surendra_vishnoi",
+      "cfHandle": "Surendra_vishnoi"
+    }
+    ```
+*   **Response (200 OK)**:
+    ```json
+    {
+      "message": "Account verified successfully!",
+      "isVerified": true,
+      "profile": { "rating": 1500, "rank": "specialist", "cfHandle": "Surendra_vishnoi" }
+    }
     ```
 
 ---
@@ -405,97 +450,55 @@ RankUp implements a stateless, token-based authentication flow.
 
 ---
 
-# 9. CodeArena Module (MOST IMPORTANT SECTION)
+# 9. Core Project Modules Deep Dive
 
-The **CodeArena** module is the central feature of the RankUp platform. It provides a real-time 1v1 practicing environment that matches users by rating and verifies their submissions against Codeforces.
+## 1. CodeArena Module (Lockout Duels & Socket Matchmaking)
+*   **Problem It Solves**: Solitary practice lacks the pacing pressure of live contests. CodeArena introduces real-time 1v1 lockout duels to make practice more engaging.
+*   **Matchmaking Loop**: The server manages an in-memory queue of players. It matches users whose Elo rating is within $\pm 200$ points.
+*   **Content Scraping**: Codeforces blocks iframe embeds. To work around this, the backend scrapes the problem statement and sample test cases using Axios and Cheerio. The scraped HTML is rendered on the client, and math formulas are formatted using MathJax.
+*   **Submission Flow**: Clicking "Submit" copies the code to the user's clipboard and opens the Codeforces submit page in a new tab. In the background, the server polls the Codeforces status API every 3 seconds to check for new submissions under the user's handle. Once an `OK` (Accepted) verdict is verified, the server updates both players' Elo ratings and pushes the final match results via sockets.
 
-### The Problem It Solves
-Traditional practice platforms lack immediate feedback and competition. CodeArena introduces a 1v1 lockout duel format that matches developers by rating, providing a more engaging and realistic practice environment.
+## 2. Wing Editorials & AI Hints Module
+*   **Problem It Solves**: Textbooks and online solutions often reveal too much information too quickly, spoiling the problem-solving experience for students.
+*   **Scraper & AI Integration**: 
+    1. The backend scrapes the Codeforces problem tutorial page using a `curl` shell call inside a Node worker.
+    2. Cheerio extracts the main blog text content from the `.ttypography` container.
+    3. The scraped text is sent to the Google Gemini API with a prompt to find the explanation for the specific problem ID.
+    4. The model returns a structured JSON payload containing a direction to think, progressive hints with common pitfalls ("catches"), observation steps, and a clean C++ solution.
+*   **Client Rendering**: The client displays hints one by one as collapsible cards, allowing users to unlock hints progressively without exposing the final solution.
 
-### Step-by-Step Internal Working
-1.  **Lobby and Queue Entry**: The user joins the matchmaking queue. The server verifies that the user has a linked and verified Codeforces handle.
-2.  **Matchmaking Loop**: The server manages an in-memory queue of players. It matches users whose Elo rating is within $\pm 200$ points.
-3.  **Problem Selection**: The server selects a random problem from a cached list of Codeforces problems that matches the average Elo rating of both players.
-4.  **Scraping and Rendering**: Codeforces blocks iframe embeds. To work around this, the backend scrapes the problem statement and sample test cases using Axios and Cheerio. The scraped HTML is rendered on the client, and math formulas are formatted using MathJax.
-5.  **Editor Integration**: The problem's sample test cases are parsed and loaded into the code editor. Users can run their code locally against these test cases using the Judge0 execution API.
-6.  **Submission Flow**:
-    *   Codeforces uses anti-bot protection on its submit form, blocking automated headless browsers.
-    *   To solve this, clicking "Submit" copies the code to the user's clipboard and opens the Codeforces submit page in a new tab.
-    *   Simultaneously, the frontend emits a socket event to the server to initiate verification.
-7.  **Submission Verification**: The backend polls the Codeforces status API every 3 seconds to check for new submissions under the user's handle.
-8.  **Match Resolution**: Once an `OK` (Accepted) verdict is verified, the server declares that player the winner, updates both players' Elo ratings, and pushes the final match results via sockets.
+## 3. Social Hub & Reputation Engine
+*   **Problem It Solves**: Traditional forums lack moderation tools and gamified incentive loops that reward helpful users.
+*   **Karma Calculations**: 
+    *   Creating a standard discussion post gives the author $+3$ Karma points.
+    *   Authoring a verified CP Wing Editorial gives the author $+5$ Karma points.
+    *   When another user upvotes a post, the author gets $+1$ Karma point. Upvote toggles deduct $-1$ Karma point.
+*   **Notification Engine**: 
+    *   Announcements created by admins trigger system-wide notifications for all users.
+    *   Mentions (e.g. `@Surendra_vishnoi`) are extracted from post markdown text using a regex parser and trigger target notifications.
 
-### Design Decisions & Tradeoffs
+## 4. Live Codeforces Sync Job
+*   **Problem It Solves**: Storing stale ratings and ranks in user profiles makes leaderboards inaccurate.
+*   **Cron Synchronization**: 
+    1. A daily background cron job runs at 03:00 IST using `node-cron`.
+    2. The worker retrieves all verified user handles from the database.
+    3. It batches handles in chunks of 300 to respect Codeforces API constraints.
+    4. It fetches profile info from `https://codeforces.com/api/user.info` and compares ratings.
+    5. It performs a high-performance `bulkWrite` operation to update MongoDB in a single database roundtrip.
+    6. It waits 1.2 seconds between batches to respect rate limits.
 
-#### 1. HTML Scraping vs. iframe Embeds
-*   *Problem*: Codeforces sets `X-Frame-Options: SAMEORIGIN` and strict Content Security Policies, which blocks iframe embeds.
-*   *Solution*: The backend acts as a scraper proxy. It fetches the problem page and extracts the description, input/output limits, and sample test cases. Math equations are formatted on the client using MathJax.
-*   *Tradeoff*: Scraping depends on Codeforces' HTML structure. If Codeforces updates its class names, the scraper could break. To mitigate this, we implemented a fallback link that redirects users to the official Codeforces problem page.
+## 5. Account Handle Verification Flow
+*   **Problem It Solves**: Users could link arbitrary high-ranked Codeforces handles to their account to cheat the leaderboard system.
+*   **Verification Challenge**:
+    1. The wizard asks the user to submit a code block that triggers a compilation error on a specific problem (e.g., Codeforces Problem 1A) within 5 minutes.
+    2. Clicking "Verify" triggers the backend to query `https://codeforces.com/api/user.status?handle=<handle>&from=1&count=5`.
+    3. The server checks for a `COMPILATION_ERROR` verdict with a timestamp matching the last 5 minutes.
+    4. Once verified, the handle is locked to the user profile, and their rating and rank are synced.
 
-#### 2. Copy-and-Redirect vs. Headless Browser Automation
-*   *Problem*: Automated logins to Codeforces are blocked by Cloudflare and browser fingerprinting.
-*   *Solution*: We designed a workflow where the client copies the code to the clipboard and redirects the user to the Codeforces submit page. The backend then verifies the submission by polling the public API.
-*   *Tradeoff*: This approach requires the user to manually paste their code and click submit on Codeforces. However, it is highly reliable and does not trigger anti-bot blocks.
-
-### Engineering Challenges & Solutions
-
-#### Challenge 1: Concurrency and Double Matching
-*   *Issue*: If multiple users join the queue simultaneously, asynchronous operations can cause race conditions where a user is matched to multiple games.
-*   *Solution*: The matchmaking queue is managed as a synchronous operation. When a match is found, both users are immediately removed from the queue map before any asynchronous database calls or problem-scraping operations start.
-
-#### Challenge 2: Codeforces API Rate Limits
-*   *Issue*: The Codeforces API limits requests to no more than 1 request per 2 seconds. A high volume of concurrent matches could trigger rate limit blocks.
-*   *Solution*: The server throttles API requests, waiting 3 seconds between polls for each user. In addition, the polling loop is terminated immediately if the match expires or a verdict is found.
-
-### Personal Contribution ("My Contribution")
-I personally designed, coded, and verified the entire CodeArena feature, including:
-*   **File Created**: `frontend/src/pages/PlaygroundPage.jsx` (Sandbox compiler).
-*   **Files Modified**:
-    *   `backend/server.js`: Matched Elo ratings, scraped problems, polled submissions, and calculated delta scores.
-    *   `frontend/src/pages/ArenaPage.jsx` & `MatchView.jsx`: Wrote lobby components, clipboard handlers, local scraper rendering, MathJax loading, and sample testcase injectors.
-    *   `frontend/src/components/arena/CodeEditor.jsx`: Integrated external stdin propagation.
-    *   `backend/models/ArenaMatch.js`: Created match schemas.
-
----
-
-### How to Explain CodeArena in Interviews
-
-#### 30-Second Explanation
-> "I designed and built CodeArena, a 1v1 competitive programming module that matches players by rating and runs real-time duels. The system uses Socket.IO for matchmaking. Once a match starts, the backend scrapes problem statements from Codeforces. When a user submits, their code is copied to their clipboard and they are redirected to Codeforces. The backend polls the Codeforces API, verifies the submission status, and updates the players' Elo ratings."
-
-#### 2-Minute Explanation
-> "I built CodeArena, a real-time competitive module for RankUp. The system uses WebSockets for matchmaking, pairing users with similar Elo ratings. When a match starts, the backend scrapes the Codeforces problem description using Axios and Cheerio, and renders it on the client with MathJax.
-> 
-> Because Codeforces uses anti-bot protection, we could not submit solutions programmatically. Instead, I designed a workflow where the client copies the code to the clipboard and redirects the user to the Codeforces submit page.
-> 
-> The backend then polls the Codeforces API every 3 seconds to check for new submissions under the user's handle. Once an `OK` (Accepted) verdict is verified, the server declares that player the winner, updates both players' Elo ratings, and pushes the final match results via sockets. This design ensures accuracy and prevents users from cheating."
-
-#### 5-Minute Explanation
-> "I architected the CodeArena module from scratch, which is the core real-time feature of the RankUp platform.
-> 
-> The architecture consists of three main components:
-> 1. **Matchmaking Engine**: Managed by an in-memory queue. It matches users whose Elo rating is within a $\pm 200$ range.
-> 2. **Content Scraping**: Codeforces blocks iframe embeds. To work around this, the backend scrapes the problem statement and sample test cases using Axios and Cheerio. The scraped HTML is rendered on the client, and math formulas are formatted using MathJax.
-> 3. **Verification Flow**: Clicking 'Submit' copies the code to the user's clipboard and opens the Codeforces submit page in a new tab. In the background, the server polls the Codeforces status API every 3 seconds. The server checks that the submission's problem ID matches, the handle is verified, and the submission time is after the match start time.
-> 
-> Once an `OK` (Accepted) verdict is verified, the server updates the database and calculates the Elo rating change using a FIDE Elo formula with $K=32$. The final results are then pushed to both players over WebSockets."
-
-#### Deep Technical Explanation
-> "In CodeArena, the matchmaking queue is managed as an in-memory Javascript Map `arenaQueue` where the key is the user's ID. When a user joins the queue, we verify their Codeforces handle status and search the queue map for an opponent whose Elo rating is within $\pm 200$ points of the user.
-> 
-> To prevent race conditions, the matched players are removed from the queue map immediately before any asynchronous database or scraping operations start.
-> 
-> The problem description is scraped using Cheerio on the backend and rendered on the client. To display mathematical notation correctly, we configure MathJax with a custom delimiter `$$$` to match Codeforces' formatting.
-> 
-> For submission verification, the backend polls the Codeforces status API:
-> `https://codeforces.com/api/user.status?handle=<cfHandle>&from=1&count=10`
-> 
-> We filter the results to ensure that the submission matches the active problem and was created after the match started. This ensures that users cannot cheat by submitting old solutions.
-> 
-> Once a valid submission is found, ratings are calculated using the FIDE Elo formula:
-> $R'_{A} = R_{A} + K(S_{A} - E_{A})$
-> where $E_{A} = 1 / (1 + 10^{(R_{B} - R_{A})/400})$.
-> The database is updated, and the final standings are pushed to the clients."
+## 6. Real-time DMs & Contest Chat Rooms
+*   **Problem It Solves**: Users need a way to communicate and coordinate matches directly on the platform.
+*   **Aggregation Pipelines**: Conversations are retrieved using a MongoDB aggregation pipeline that groups messages by the other participant, calculates unread counts, and returns user details.
+*   **Contest Sockets**: When a contest goes live, the server spawns a temporary Socket.IO chat room using the contest ID, allowing users to discuss problems in real-time.
 
 ---
 
@@ -504,6 +507,7 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 *   **XSS Mitigation**: The frontend renders scraped HTML from Codeforces using `dangerouslySetInnerHTML`. Because the source is a trusted domain, the risk of injection is minimized. However, as an additional security measure, the scraper only extracts specific, predefined elements from the Codeforces DOM.
 *   **SQL/NoSQL Injection**: We use Mongoose schemas to query MongoDB. Queries utilize structured objects (e.g., `User.findOne({ username })`) which automatically sanitize input parameters, preventing query selector injection.
 *   **CSRF Prevention**: User authentication tokens are stored in `HttpOnly` cookies, which restricts JavaScript from accessing them. Access is validated on request receipt.
+*   **Strict Access Control**: Protect routes use middleware that checks the decoded JWT claims for the required role (e.g., `isWingMember` or `isAdmin`) before running controller logic.
 
 ---
 
@@ -516,8 +520,11 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 | **Matchmaking** | $O(N)$ | $O(N)$ | Loops through the active queue map of size $N$. |
 | **Elo Calculation** | $O(1)$ | $O(1)$ | Constant time mathematical calculations. |
 | **Codeforces Polling** | $O(1)$ | $O(1)$ | Fetches a fixed list of 10 submissions. |
+| **Conversation List Aggregation** | $O(M \log C)$ | $O(C)$ | Aggregates $M$ messages into $C$ conversations. |
+| **Daily Cron Sync** | $O(U/300)$ | $O(U)$ | Bulk writes $U$ user profiles in batches of 300. |
 
 ### Bottlenecks and Optimizations
+*   *Aggregation Pipeline*: Querying direct messages on every page refresh can slow down the database. To optimize this, we index the `[sender, recipient]` fields in the Message collection.
 *   *Scraper Performance*: Scraping problem descriptions dynamically for every match can introduce latency. To optimize this, the backend caches problem set metadata in memory for 1 hour.
 
 ---
@@ -527,6 +534,7 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 *   **Observer Pattern**: Implemented using Socket.IO. The server acts as the subject, broadcasting match events (`arena:match_found`, `arena:result`) to client observers in private rooms.
 *   **Proxy Pattern**: The backend acts as a proxy for the Judge0 compiler API, keeping the API keys secure on the server instead of exposing them to the client.
 *   **MVC Pattern**: Express routes act as the controller mapping, calling decoupled controller functions, and reading/writing to Mongoose models.
+*   **Strategy Pattern**: The AI Hints generator uses a fallback strategy, attempting to query models in order of priority (`gemini-2.5-flash` down to `gemini-1.5-flash`) if an instance is overloaded.
 
 ---
 
@@ -537,11 +545,11 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 
 ### At 10,000 Users
 *   *Bottlenecks*: The in-memory matchmaking queue `arenaQueue` is stored in the Node.js process memory. If the backend scales horizontally (multiple server instances behind a load balancer), the servers cannot share the queue.
-*   *Solution*: Migrate the matchmaking queue to a shared **Redis cache** using sorted sets for Elo ranges, and implement a distributed lock mechanism.
+*   *Solution*: Migrate the matchmaking queue to a shared **Redis cache** using sorted sets to organize users by Elo.
 
 ### At 100,000+ Users
 *   *Bottlenecks*: Database write operations and API rate limits on Codeforces.
-*   *Solution*: Implement database indexing on all search keys, use MongoDB replica sets, and route user submission verification requests through a distributed proxy pool to avoid hitting Codeforces rate limits from a single server IP address.
+*   *Solution*: Implement database sharding, index search keys, deploy replica sets, and route API calls through rotating proxies to prevent rate limit blocks.
 
 ---
 
@@ -559,13 +567,25 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 
 # 15. Resume Talking Points
 
-### Resume Bullet Points
-*   **Real-Time Lockout Engine**: Designed and built the CodeArena module, a 1v1 lockout duel application using React and Socket.IO, matching users within $\pm 200$ Elo and verifying solutions against the Codeforces API.
-*   **Anti-Bot & CORS Workarounds**: Developed a backend scraper using Axios and Cheerio to bypass frame-blocking policies, and implemented a clipboard copy-and-redirect workflow on the client to work around Cloudflare protection on the Codeforces submit form.
-*   **Compiler Sandbox Integration**: Built a local code playground that runs custom test cases in the browser, compiling code using the Judge0 API.
+### 1. CodeArena Module (Duels & Matchmaking)
+*   Designed and built a real-time 1v1 lockout duel application using React and Socket.IO, matching users within $\pm 200$ Elo and verifying solutions against the Codeforces API.
+*   Implemented a clipboard copy-and-redirect workflow on the client to work around Cloudflare protection on the Codeforces submit form.
+*   Developed a backend scraper using Axios and Cheerio to bypass frame-blocking policies.
 
-### LinkedIn Project Description
-> "RankUp is a community platform for competitive programmers. I designed and built the CodeArena module, which features a 1v1 lockout matchmaking engine. The system pairs users with similar ratings using WebSockets, scrapes Codeforces problem statements on the fly, and uses a client-side clipboard workflow to handle code submissions. The backend polls the Codeforces API in real-time to verify verdicts and updates user ratings using the FIDE Elo formula."
+### 2. Wing Editorials & AI Hints Module
+*   Built an automated backend scraper that retrieves Codeforces tutorials and parses text using Cheerio.
+*   Integrated the Google Gemini API to parse tutorial text and return structured JSON containing progressive hints.
+*   Designed a client-side progressive hint component that displays observations and catches sequentially.
+
+### 3. Verification & Cron Sync Engine
+*   Created a password-less verification system that checks for recent compilation errors on Codeforces to confirm handle ownership.
+*   Designed a daily background sync job using `node-cron` that fetches profile updates from the Codeforces API.
+*   Optimized database updates using high-performance MongoDB `bulkWrite` operations.
+
+### 4. Direct Messaging & Aggregation
+*   Built a real-time direct messaging system using Socket.IO to handle messaging and online status updates.
+*   Optimized conversation listing queries using MongoDB aggregation pipelines.
+*   Designed temporary chat rooms for contests using Socket.IO rooms.
 
 ---
 
@@ -579,7 +599,6 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 *   **Follow-ups**: What features encourage users to return? (Daily streaks, leaderboards).
 
 ### Q2: Who are the target users?
-*   **Interviewer Intention**: See if you understand the target audience.
 *   **Ideal Answer**: Students preparing for technical interviews, competitive programming enthusiasts, and university computer science clubs.
 
 ### Q3: How is this platform different from Codeforces?
@@ -741,10 +760,10 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 *   **Ideal Answer**: We hash passwords using Bcrypt with a salt round factor of 10. We never store plain-text passwords.
 
 ### Q47: How does the verification system link Codeforces handles?
-*   **Ideal Answer**: The platform asks the user to submit a code block that triggers a specific compilation error on Codeforces. The backend verifies the error to confirm ownership.
+*   **Ideal Answer**: The platform asks the user to submit a code snippet that triggers a specific compilation error on Codeforces. The backend verifies the error to confirm ownership.
 
 ### Q48: How are user roles (Admin, Wing Member) checked?
-*   **Ideal Answer**: Roles are stored in the database. Protect routes use middleware that checks the decoded JWT claims for the required role.
+*   **Ideal Answer**: Roles are stored in the database. Protected routes use middleware that checks the decoded JWT claims for the required role.
 
 ---
 
@@ -779,6 +798,7 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 ## Security Questions
 
 ### Q57: How do you protect the system against NoSQL Injection?
+*   **Interviewer Intention**: Verify security best practices.
 *   **Ideal Answer**: Mongoose schemas enforce type casting on all inputs. We avoid using raw queries like `req.body` directly, preventing query selector injections.
 
 ### Q58: How do you mitigate Cross-Site Scripting (XSS) when rendering scraped HTML?
@@ -892,7 +912,7 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 
 ---
 
-## CodeArena Questions (Most Important)
+## CodeArena Questions
 
 ### Q89: What was your personal contribution to CodeArena?
 *   **Interviewer Intention**: Identify your individual impact on the project.
@@ -981,7 +1001,7 @@ I personally designed, coded, and verified the entire CodeArena feature, includi
 # 18. Storytelling Section
 
 ### "Tell me about this project" (2-Minute Version)
-> "RankUp is a community platform for competitive programmers. I designed and built the CodeArena module, which features a 1v1 lockout matchmaking engine. The system pairs users with similar ratings using WebSockets, scrapes Codeforces problem statements on the fly, and uses a client-side clipboard workflow to handle code submissions. The backend polls the Codeforces API in real-time to verify verdicts and updates user ratings using the FIDE Elo formula."
+> "RankUp is a practicing platform for competitive programmers. I designed and built the CodeArena module, which features a 1v1 lockout matchmaking engine. The system pairs users with similar ratings using WebSockets, scrapes Codeforces problem statements on the fly, and uses a client-side clipboard workflow to handle code submissions. The backend polls the Codeforces API in real-time to verify verdicts and updates user ratings using the FIDE Elo formula."
 
 ### "Tell me about this project" (5-Minute Version)
 > "RankUp is a practicing platform for competitive programmers. I worked in a team to build it, and my primary responsibility was the CodeArena module. CodeArena is a 1v1 real-time competitive playground. I designed the matchmaking algorithm which connects two verified users within a $\pm 200$ Elo range using WebSockets. When a match starts, the backend scrapes the Codeforces problem description on the fly, rendering it locally with LaTeX math symbols.
